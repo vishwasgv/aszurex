@@ -38,9 +38,9 @@ const upload = multer({
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: 'aszurex1000@gmail.com',     // ⚠️ CHANGE THIS
-    pass: 'myui fnis qdyg tyho'          // ⚠️ CHANGE THIS
-  }
+  user: process.env.EMAIL_USER,
+  pass: process.env.EMAIL_PASS
+}
 });
 
 // Check email config
