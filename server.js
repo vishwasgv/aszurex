@@ -52,27 +52,47 @@ app.post('/api/contact', async (req, res) => {
   try {
     const { name, email, company, message } = req.body;
 
-    await sgMail.send({
-  to: process.env.EMAIL_USER,
-  from: process.env.EMAIL_USER, // must be verified in SendGrid
-  replyTo: email,
-  subject: `New Contact: ${name}`,
-  html: `
-    <h2>New Contact Form</h2>
-    <p><strong>Name:</strong> ${name}</p>
-    <p><strong>Email:</strong> ${email}</p>
-    <p><strong>Company:</strong> ${company || 'N/A'}</p>
-    <p><strong>Message:</strong></p>
-    <p>${message}</p>
-  `
-});
-    
-    res.json({ success: true, message: 'Message sent!' });
+    // ✅ HARD VALIDATION (REQUIRED)
+    if (!name || !email || !message) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required fields'
+      });
+    }
+
+    const msg = {
+      to: process.env.FROM_EMAIL,                 // RECEIVER
+      from: {
+        email: process.env.FROM_EMAIL,            // MUST be verified sender
+        name: 'AszureX Website'
+      },
+      replyTo: email,                             // User email
+      subject: `New Contact: ${name}`,
+      html: `
+        <h2>New Contact Form</h2>
+        <p><strong>Name:</strong> ${name}</p>
+        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Company:</strong> ${company || 'N/A'}</p>
+        <p><strong>Message:</strong></p>
+        <p>${message}</p>
+      `
+    };
+
+    await sgMail.send(msg);
+
+    return res.json({ success: true, message: 'Message sent!' });
+
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: 'Failed to send' });
+    // ✅ LOG REAL SENDGRID ERROR
+    console.error('SENDGRID ERROR:', error.response?.body || error);
+
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to send'
+    });
   }
 });
+
 
 // Career form
 app.post('/api/apply', upload.single('resume'), async (req, res) => {
@@ -81,8 +101,12 @@ app.post('/api/apply', upload.single('resume'), async (req, res) => {
     const resume = req.file;
 
     await sgMail.send({
-  to: process.env.EMAIL_USER,
-  from: process.env.EMAIL_USER,
+  to: process.env.FROM_EMAIL,
+  from: {
+  email: process.env.FROM_EMAIL,
+  name: 'AszureX Careers'
+},
+
   replyTo: email,
   subject: `Job Application: ${position}`,
   html: `
