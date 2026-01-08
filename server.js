@@ -1,10 +1,12 @@
 const express = require('express');
-const nodemailer = require('nodemailer');
 const multer = require('multer');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
+
+const sgMail = require('@sendgrid/mail');
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -35,13 +37,7 @@ const upload = multer({
 });
 
 // Email setup - UPDATE THESE LINES!
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-  user: process.env.EMAIL_USER,
-  pass: process.env.EMAIL_PASS
-}
-});
+
 
 // Check email config
 transporter.verify(function(error, success) {
@@ -62,22 +58,21 @@ app.post('/api/contact', async (req, res) => {
   try {
     const { name, email, company, message } = req.body;
 
-    const mailOptions = {
-      from: `"AszureX Website" <${process.env.EMAIL_USER}>`,
-      to: process.env.EMAIL_USER,
-      replyTo: email,
-      subject: `New Contact: ${name}`,
-      html: `
-        <h2>New Contact Form</h2>
-        <p><strong>Name:</strong> ${name}</p>
-        <p><strong>Email:</strong> ${email}</p>
-        <p><strong>Company:</strong> ${company || 'N/A'}</p>
-        <p><strong>Message:</strong></p>
-        <p>${message}</p>
-      `
-    };
-
-    await transporter.sendMail(mailOptions);
+    await sgMail.send({
+  to: process.env.EMAIL_USER,
+  from: process.env.EMAIL_USER, // must be verified in SendGrid
+  replyTo: email,
+  subject: `New Contact: ${name}`,
+  html: `
+    <h2>New Contact Form</h2>
+    <p><strong>Name:</strong> ${name}</p>
+    <p><strong>Email:</strong> ${email}</p>
+    <p><strong>Company:</strong> ${company || 'N/A'}</p>
+    <p><strong>Message:</strong></p>
+    <p>${message}</p>
+  `
+});
+    
     res.json({ success: true, message: 'Message sent!' });
   } catch (error) {
     console.error(error);
@@ -91,30 +86,31 @@ app.post('/api/apply', upload.single('resume'), async (req, res) => {
     const { name, email, phone, position, experience, coverLetter } = req.body;
     const resume = req.file;
 
-    const mailOptions = {
-      from: `"AszureX Careers" <${process.env.EMAIL_USER}>`,
-      to: process.env.EMAIL_USER,
-      replyTo: email,
-      subject: `Job Application: ${position}`,
-      html: `
-        <h2>New Job Application</h2>
-        <p><strong>Position:</strong> ${position}</p>
-        <p><strong>Name:</strong> ${name}</p>
-        <p><strong>Email:</strong> ${email}</p>
-        <p><strong>Phone:</strong> ${phone}</p>
-        <p><strong>Experience:</strong> ${experience}</p>
-        <p><strong>Cover Letter:</strong></p>
-        <p>${coverLetter || 'N/A'}</p>
-      `,
-      attachments: resume
-        ? [{
-            filename: resume.originalname,
-            path: resume.path
-          }]
-        : []
-    };
+    await sgMail.send({
+  to: process.env.EMAIL_USER,
+  from: process.env.EMAIL_USER,
+  replyTo: email,
+  subject: `Job Application: ${position}`,
+  html: `
+    <h2>New Job Application</h2>
+    <p><strong>Position:</strong> ${position}</p>
+    <p><strong>Name:</strong> ${name}</p>
+    <p><strong>Email:</strong> ${email}</p>
+    <p><strong>Phone:</strong> ${phone}</p>
+    <p><strong>Experience:</strong> ${experience}</p>
+    <p><strong>Cover Letter:</strong></p>
+    <p>${coverLetter || 'N/A'}</p>
+  `,
+  attachments: resume ? [{
+    content: fs.readFileSync(resume.path).toString('base64'),
+    filename: resume.originalname,
+    type: resume.mimetype,
+    disposition: 'attachment'
+  }] : []
+});
 
-    const info = await transporter.sendMail(mailOptions);
+
+    
     console.log('📧 Job application email sent:', info.messageId);
 
     // Delete resume after sending
