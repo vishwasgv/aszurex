@@ -61,9 +61,9 @@ app.post('/api/contact', async (req, res) => {
     }
 
     const msg = {
-      to: process.env.FROM_EMAIL,                 // RECEIVER
+      to: 'aszurex1000@gmail.com',                // RECEIVER
       from: {
-        email: process.env.FROM_EMAIL,            // MUST be verified sender
+        email: 'no-reply@aszurex.com',            // MUST be verified sender
         name: 'AszureX Website'
       },
       replyTo: email,                             // User email
@@ -101,9 +101,9 @@ app.post('/api/apply', upload.single('resume'), async (req, res) => {
     const resume = req.file;
 
     await sgMail.send({
-  to: process.env.FROM_EMAIL,
+  to: 'aszurex1000@gmail.com',
   from: {
-  email: process.env.FROM_EMAIL,
+  email: 'no-reply@aszurex.com',
   name: 'AszureX Careers'
 },
 
