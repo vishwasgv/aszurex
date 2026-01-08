@@ -63,8 +63,9 @@ app.post('/api/contact', async (req, res) => {
     const { name, email, company, message } = req.body;
 
     const mailOptions = {
-      from: email,
-      to: 'aszurex1000@gmail.com',
+      from: `"AszureX Website" <${process.env.EMAIL_USER}>`,
+      to: process.env.EMAIL_USER,
+      replyTo: email,
       subject: `New Contact: ${name}`,
       html: `
         <h2>New Contact Form</h2>
@@ -91,8 +92,9 @@ app.post('/api/apply', upload.single('resume'), async (req, res) => {
     const resume = req.file;
 
     const mailOptions = {
-      from: email,
-      to: 'aszurex1000@gmail.com',
+      from: `"AszureX Careers" <${process.env.EMAIL_USER}>`,
+      to: process.env.EMAIL_USER,
+      replyTo: email,
       subject: `Job Application: ${position}`,
       html: `
         <h2>New Job Application</h2>
