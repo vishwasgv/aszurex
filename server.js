@@ -15,7 +15,7 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // File upload setup
 const storage = multer.diskStorage({
@@ -150,7 +150,7 @@ app.listen(PORT, () => {
   console.log('\n' + '='.repeat(50));
   console.log('🚀 AszureX Website is LIVE!');
   console.log('='.repeat(50));
-  console.log(`📍 Open: http://localhost:${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
   console.log('='.repeat(50));
   console.log('📄 Pages:');
   console.log(`   Home:     http://localhost:${PORT}/`);
