@@ -40,13 +40,7 @@ const upload = multer({
 
 
 // Check email config
-transporter.verify(function(error, success) {
-  if (error) {
-    console.log('❌ Email not configured');
-  } else {
-    console.log('✅ Email ready');
-  }
-});
+
 
 // Home page
 app.get('/', (req, res) => {
@@ -111,7 +105,8 @@ app.post('/api/apply', upload.single('resume'), async (req, res) => {
 
 
     
-    console.log('📧 Job application email sent:', info.messageId);
+    console.log('📧 Job application email sent successfully');
+
 
     // Delete resume after sending
     if (resume && fs.existsSync(resume.path)) {
