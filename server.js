@@ -11,6 +11,16 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// -----------------------------
+// ROBOTS.TXT (Google crawl fix)
+// -----------------------------
+app.get('/robots.txt', (req, res) => {
+  res.type('text/plain');
+  res.send(`User-agent: *
+Allow: /
+Sitemap: https://aszurex.com/sitemap.xml`);
+});
+
 // Middleware
 app.use(cors());
 app.use(bodyParser.json());
