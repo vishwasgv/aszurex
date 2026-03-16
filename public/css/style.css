@@ -1267,3 +1267,11 @@ transition: transform .25s ease, box-shadow .25s ease;
 transform: translateY(-6px);
 box-shadow: 0 20px 40px rgba(0,0,0,0.08);
 }
+
+.stat-icon svg{
+width:28px;
+height:28px;
+stroke-width:2;
+display:block;
+margin:auto;
+}
