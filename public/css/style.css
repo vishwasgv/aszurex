@@ -1258,3 +1258,12 @@ a {
     grid-template-columns: 1fr;
   }
 }
+
+.service-card{
+transition: transform .25s ease, box-shadow .25s ease;
+}
+
+.service-card:hover{
+transform: translateY(-6px);
+box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+}
