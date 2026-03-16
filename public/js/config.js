@@ -136,7 +136,72 @@ const SITE_CONFIG = {
         'Excel / ERP updates',
         'Monthly reports'
       ]
-    }
+    },
+   {
+  id: 'custom-software',
+  icon: '💻',
+  title: 'Custom Software Development',
+  description: 'Design and development of custom web applications and internal business systems tailored to your operations.',
+  features: [
+    'Full-stack web development',
+    'Internal business tools',
+    'Business dashboards',
+    'Workflow automation',
+    'Scalable SaaS platforms'
+  ]
+},
+{
+  id: 'web-development',
+  icon: '🌐',
+  title: 'Web Application Development',
+  description: 'Modern scalable web applications for startups and growing businesses.',
+  features: [
+    'Frontend development',
+    'Backend development',
+    'Admin dashboards',
+    'API integrations',
+    'Performance optimization'
+  ]
+},
+{
+  id: 'erp-implementation',
+  icon: '🏢',
+  title: 'ERP Implementation',
+  description: 'Implementation and customization of ERP systems to automate operations.',
+  features: [
+    'ERPNext implementation',
+    'Odoo implementation',
+    'Inventory management',
+    'Accounting automation',
+    'Business workflow automation'
+  ]
+},
+{
+  id: 'crm-implementation',
+  icon: '📇',
+  title: 'CRM Implementation',
+  description: 'CRM systems that help manage leads, sales pipelines and customer relationships.',
+  features: [
+    'HubSpot CRM setup',
+    'Zoho CRM setup',
+    'Sales pipeline automation',
+    'Lead tracking',
+    'Customer lifecycle management'
+  ]
+},
+{
+  id: 'api-integration',
+  icon: '🔗',
+  title: 'API Development & Integration',
+  description: 'Connect systems together using APIs and automation workflows.',
+  features: [
+    'REST API development',
+    'Payment gateway integration',
+    'Third-party integrations',
+    'Automation pipelines',
+    'Webhook systems'
+  ]
+}
   ]
 };
 
