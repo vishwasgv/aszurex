@@ -111,9 +111,9 @@ app.post('/api/apply', upload.single('resume'), async (req, res) => {
     const resume = req.file;
 
     await sgMail.send({
-  to: 'aszurex1000@gmail.com',
+  to: process.env.TO_EMAIL,
   from: {
-  email: 'no-reply@aszurex.com',
+  email: process.env.FROM_EMAIL,
   name: 'AszureX Careers'
 },
 
