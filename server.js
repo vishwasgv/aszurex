@@ -5,8 +5,17 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 
-const sgMail = require('@sendgrid/mail');
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+const nodemailer = require('nodemailer');
+
+const transporter = nodemailer.createTransport({
+  host: "smtp.zoho.in",   // for India (use smtp.zoho.com if unsure)
+  port: 465,
+  secure: true,
+  auth: {
+    user: process.env.ZOHO_EMAIL,
+    pass: process.env.ZOHO_PASSWORD
+  }
+});
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -88,7 +97,19 @@ app.post('/api/contact', async (req, res) => {
       `
     };
 
-    await sgMail.send(msg);
+    await transporter.sendMail({
+  from: process.env.ZOHO_EMAIL,
+  to: process.env.TO_EMAIL,
+  replyTo: email,
+  subject: `New Contact: ${name}`,
+  html: `
+    <h3>New Contact Form Submission</h3>
+    <p><b>Name:</b> ${name}</p>
+    <p><b>Email:</b> ${email}</p>
+    <p><b>Company:</b> ${company}</p>
+    <p><b>Message:</b> ${message}</p>
+  `
+});
 
     return res.json({ success: true, message: 'Message sent!' });
 
