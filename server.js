@@ -73,7 +73,7 @@ app.post('/api/contact', async (req, res) => {
     const msg = {
       to: process.env.TO_EMAIL,                // RECEIVER
       from: {
-        email: 'process.env.FROM_EMAIL',            // MUST be verified sender
+        email: process.env.FROM_EMAIL,            // MUST be verified sender
         name: 'AszureX Website'
       },
       replyTo: email,                             // User email
