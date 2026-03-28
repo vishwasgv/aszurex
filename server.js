@@ -79,23 +79,6 @@ app.post('/api/contact', async (req, res) => {
       });
     }
 
-    const msg = {
-      to: process.env.TO_EMAIL,                // RECEIVER
-      from: {
-        email: process.env.FROM_EMAIL,            // MUST be verified sender
-        name: 'AszureX Website'
-      },
-      replyTo: email,                             // User email
-      subject: `New Contact: ${name}`,
-      html: `
-        <h2>New Contact Form</h2>
-        <p><strong>Name:</strong> ${name}</p>
-        <p><strong>Email:</strong> ${email}</p>
-        <p><strong>Company:</strong> ${company || 'N/A'}</p>
-        <p><strong>Message:</strong></p>
-        <p>${message}</p>
-      `
-    };
 
     await transporter.sendMail({
   from: process.env.ZOHO_EMAIL,
