@@ -81,7 +81,7 @@ app.post('/api/contact', async (req, res) => {
 
 
     await transporter.sendMail({
-  from: process.env.ZOHO_EMAIL,
+  from:`"AszureX" <${process.env.ZOHO_EMAIL}>`,
   to: process.env.TO_EMAIL,
   replyTo: email,
   subject: `New Contact: ${name}`,
@@ -115,7 +115,7 @@ app.post('/api/apply', upload.single('resume'), async (req, res) => {
     const resume = req.file;
 
     await transporter.sendMail({
-  from: process.env.ZOHO_EMAIL,
+  from:`"AszureX" <${process.env.ZOHO_EMAIL}>`,
   to: process.env.TO_EMAIL,
   replyTo: email,
   subject: `Job Application: ${position}`,
