@@ -115,7 +115,7 @@ app.post('/api/contact', async (req, res) => {
 
   } catch (error) {
     // ✅ LOG REAL SENDGRID ERROR
-    console.error('SENDGRID ERROR:', error.response?.body || error);
+    console.error('EMAIL ERROR:', error);
 
     return res.status(500).json({
       success: false,
@@ -131,13 +131,9 @@ app.post('/api/apply', upload.single('resume'), async (req, res) => {
     const { name, email, phone, position, experience, coverLetter } = req.body;
     const resume = req.file;
 
-    await sgMail.send({
+    await transporter.sendMail({
+  from: process.env.ZOHO_EMAIL,
   to: process.env.TO_EMAIL,
-  from: {
-  email: process.env.FROM_EMAIL,
-  name: 'AszureX Careers'
-},
-
   replyTo: email,
   subject: `Job Application: ${position}`,
   html: `
@@ -153,8 +149,7 @@ app.post('/api/apply', upload.single('resume'), async (req, res) => {
   attachments: resume ? [{
     content: fs.readFileSync(resume.path).toString('base64'),
     filename: resume.originalname,
-    type: resume.mimetype,
-    disposition: 'attachment'
+    contentType: resume.mimetype
   }] : []
 });
 
