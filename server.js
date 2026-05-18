@@ -21,9 +21,10 @@ if (!ZOHO_EMAIL || !ZOHO_PASSWORD || !TO_EMAIL) {
 
 // ── Nodemailer transporter ─────────────────────────────────
 const transporter = nodemailer.createTransport({
-  host: 'smtp.zoho.in',
-  port: 465,
-  secure: true,
+  host: 'smtp.zoho.com',
+  port: 587,
+  secure: false,
+  requireTLS: true,
   auth: {
     user: ZOHO_EMAIL,
     pass: ZOHO_PASSWORD

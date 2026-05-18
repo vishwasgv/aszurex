@@ -818,6 +818,8 @@ input, textarea, select { font-family: inherit; }
   color: rgba(255,255,255,0.50);
 }
 .footer-contact-item svg { width: 15px; height: 15px; flex-shrink: 0; opacity: 0.45; }
+.footer-contact-item a { color: inherit; text-decoration: none; transition: color 0.2s; }
+.footer-contact-item a:hover { color: var(--accent); }
 
 .footer-bottom {
   border-top: 1px solid rgba(255,255,255,0.05);
