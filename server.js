@@ -4,45 +4,55 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
-
 const nodemailer = require('nodemailer');
 
+// ── Env-var check ─────────────────────────────────────────
+const ZOHO_EMAIL    = process.env.ZOHO_EMAIL;
+const ZOHO_PASSWORD = process.env.ZOHO_PASSWORD;
+const TO_EMAIL      = process.env.TO_EMAIL;
+
+if (!ZOHO_EMAIL || !ZOHO_PASSWORD || !TO_EMAIL) {
+  console.error('❌ MISSING ENV VARS:', {
+    ZOHO_EMAIL:    !!ZOHO_EMAIL,
+    ZOHO_PASSWORD: !!ZOHO_PASSWORD,
+    TO_EMAIL:      !!TO_EMAIL
+  });
+}
+
+// ── Nodemailer transporter ─────────────────────────────────
 const transporter = nodemailer.createTransport({
-  host: "smtp.zoho.in",   // for India (use smtp.zoho.com if unsure)
+  host: 'smtp.zoho.in',
   port: 465,
   secure: true,
   auth: {
-    user: process.env.ZOHO_EMAIL,
-    pass: process.env.ZOHO_PASSWORD
+    user: ZOHO_EMAIL,
+    pass: ZOHO_PASSWORD
+  }
+});
+
+// Verify SMTP connection at startup
+transporter.verify((error) => {
+  if (error) {
+    console.error('❌ SMTP connection failed:', error.message, '| code:', error.code);
+  } else {
+    console.log('✅ SMTP connection verified — ready to send mail');
   }
 });
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// -----------------------------
-// ROBOTS.TXT (Google crawl fix)
-// -----------------------------
-app.get('/robots.txt', (req, res) => {
-  res.type('text/plain');
-  res.send(`User-agent: *
-Allow: /
-Sitemap: https://aszurex.com/sitemap.xml`);
-});
-
-// Middleware
+// ── Middleware ─────────────────────────────────────────────
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// File upload setup
+// ── File upload ────────────────────────────────────────────
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     const uploadDir = './uploads';
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir);
-    }
+    if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
     cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
@@ -50,122 +60,91 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({ 
-  storage: storage,
+const upload = multer({
+  storage,
   limits: { fileSize: 5 * 1024 * 1024 }
 });
 
-// Email setup - UPDATE THESE LINES!
-
-
-// Check email config
-
-
-// Home page
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-// Contact form
+// ── Contact form ───────────────────────────────────────────
 app.post('/api/contact', async (req, res) => {
   try {
     const { name, email, company, message } = req.body;
 
-    // ✅ HARD VALIDATION (REQUIRED)
     if (!name || !email || !message) {
-      return res.status(400).json({
-        success: false,
-        message: 'Missing required fields'
-      });
+      return res.status(400).json({ success: false, message: 'Please fill in all required fields.' });
     }
 
-
     await transporter.sendMail({
-  from:`"AszureX" <${process.env.ZOHO_EMAIL}>`,
-  to: process.env.TO_EMAIL,
-  replyTo: email,
-  subject: `New Contact: ${name}`,
-  html: `
-    <h3>New Contact Form Submission</h3>
-    <p><b>Name:</b> ${name}</p>
-    <p><b>Email:</b> ${email}</p>
-    <p><b>Company:</b> ${company}</p>
-    <p><b>Message:</b> ${message}</p>
-  `
-});
+      from:    `"AszureX" <${ZOHO_EMAIL}>`,
+      to:      TO_EMAIL,
+      replyTo: email,
+      subject: `New Contact: ${name}`,
+      html: `
+        <h3>New Contact Form Submission</h3>
+        <p><b>Name:</b> ${name}</p>
+        <p><b>Email:</b> ${email}</p>
+        <p><b>Company:</b> ${company || 'N/A'}</p>
+        <p><b>Message:</b> ${message}</p>
+      `
+    });
 
-    return res.json({ success: true, message: 'Message sent!' });
+    console.log(`✅ Contact email sent — from: ${email}`);
+    return res.json({ success: true, message: 'Message sent! We\'ll be in touch within one business day.' });
 
   } catch (error) {
-    // ✅ LOG REAL SENDGRID ERROR
-    console.error('EMAIL ERROR:', error);
-
+    console.error('❌ Contact email error:', error.message, '| code:', error.code, '| response:', error.response);
     return res.status(500).json({
       success: false,
-      message: 'Failed to send'
+      message: 'Failed to send message. Please email us directly at contact@aszurex.com'
     });
   }
 });
 
-
-// Career form
+// ── Career form ────────────────────────────────────────────
 app.post('/api/apply', upload.single('resume'), async (req, res) => {
   try {
     const { name, email, phone, position, experience, coverLetter } = req.body;
     const resume = req.file;
 
     await transporter.sendMail({
-  from:`"AszureX" <${process.env.ZOHO_EMAIL}>`,
-  to: process.env.TO_EMAIL,
-  replyTo: email,
-  subject: `Job Application: ${position}`,
-  html: `
-    <h2>New Job Application</h2>
-    <p><strong>Position:</strong> ${position}</p>
-    <p><strong>Name:</strong> ${name}</p>
-    <p><strong>Email:</strong> ${email}</p>
-    <p><strong>Phone:</strong> ${phone}</p>
-    <p><strong>Experience:</strong> ${experience}</p>
-    <p><strong>Cover Letter:</strong></p>
-    <p>${coverLetter || 'N/A'}</p>
-  `,
-  attachments: resume ? [{
-    content: fs.readFileSync(resume.path).toString('base64'),
-    filename: resume.originalname,
-    contentType: resume.mimetype
-  }] : []
-});
+      from:    `"AszureX" <${ZOHO_EMAIL}>`,
+      to:      TO_EMAIL,
+      replyTo: email,
+      subject: `Job Application: ${position}`,
+      html: `
+        <h2>New Job Application</h2>
+        <p><strong>Position:</strong> ${position}</p>
+        <p><strong>Name:</strong> ${name}</p>
+        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Phone:</strong> ${phone}</p>
+        <p><strong>Experience:</strong> ${experience}</p>
+        <p><strong>Cover Letter:</strong></p>
+        <p>${coverLetter || 'N/A'}</p>
+      `,
+      attachments: resume ? [{
+        content:     fs.readFileSync(resume.path).toString('base64'),
+        filename:    resume.originalname,
+        contentType: resume.mimetype
+      }] : []
+    });
 
+    console.log(`✅ Job application email sent — ${name} for ${position}`);
 
-    
-    console.log('📧 Job application email sent successfully');
+    if (resume && fs.existsSync(resume.path)) fs.unlinkSync(resume.path);
 
+    return res.json({ success: true, message: 'Application submitted successfully!' });
 
-    // Delete resume after sending
-    if (resume && fs.existsSync(resume.path)) {
-      fs.unlinkSync(resume.path);
-    }
-
-    res.json({ success: true, message: 'Application submitted successfully!' });
   } catch (error) {
-    console.error('❌ Job application failed:', error);
-    res.status(500).json({ success: false, message: 'Failed to submit application' });
+    console.error('❌ Job application email error:', error.message, '| code:', error.code);
+    return res.status(500).json({ success: false, message: 'Failed to submit application.' });
   }
 });
 
-
-// Start server
+// ── Start ──────────────────────────────────────────────────
 app.listen(PORT, () => {
-  console.log('\n' + '='.repeat(50));
-  console.log('🚀 AszureX Website is LIVE!');
   console.log('='.repeat(50));
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log('🚀 AszureX server running on port', PORT);
+  console.log('   ZOHO_EMAIL set:', !!ZOHO_EMAIL);
+  console.log('   TO_EMAIL set:  ', !!TO_EMAIL);
   console.log('='.repeat(50));
-  console.log('📄 Pages:');
-  console.log(`   Home:     http://localhost:${PORT}/`);
-  console.log(`   Services: http://localhost:${PORT}/services.html`);
-  console.log(`   About:    http://localhost:${PORT}/about.html`);
-  console.log(`   Careers:  http://localhost:${PORT}/careers.html`);
-  console.log(`   Contact:  http://localhost:${PORT}/contact.html`);
-  console.log('='.repeat(50) + '\n');
 });
