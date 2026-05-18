@@ -639,6 +639,15 @@ input, textarea, select { font-family: inherit; }
   transition: box-shadow 0.2s, transform 0.2s;
 }
 .qual-card:hover { box-shadow: var(--shadow); transform: translateY(-2px); }
+.qual-card.has-img { padding: 0; overflow: hidden; }
+.qual-card-img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  object-position: center 30%;
+  display: block;
+}
+.qual-card.has-img .qual-card-body { padding: 28px 32px; }
 
 .qual-num {
   font-size: 11px;
@@ -1392,15 +1401,17 @@ input, textarea, select { font-family: inherit; }
   color: rgba(255,255,255,0.55);
 }
 
-/* ── Contact visual banner ───────────────────────────────── */
-.contact-visual {
+/* ── Contact info panel image ────────────────────────────── */
+.contact-info-img {
+  border-radius: var(--radius-lg);
   overflow: hidden;
+  margin-bottom: 32px;
 }
-.contact-visual img {
+.contact-info-img img {
   width: 100%;
-  height: 380px;
+  height: 240px;
   object-fit: cover;
-  object-position: center 35%;
+  object-position: center 25%;
   display: block;
 }
 

@@ -190,7 +190,7 @@ const SITE_CONFIG = {
     },
     {
       id: 'data-reporting',
-      image: 'https://images.unsplash.com/photo-1504868584819-f8e8b4b6d7e3?w=600&q=80&auto=format&fit=crop',
+      image: 'https://images.unsplash.com/photo-1543286386-713bdd548da4?w=600&q=80&auto=format&fit=crop',
       icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>',
       title: 'Data & Reporting Support',
       description: 'Actionable reporting and analytics that give you visibility into support performance, SLA compliance, and customer health.',
