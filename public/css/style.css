@@ -186,8 +186,7 @@ input, textarea, select { font-family: inherit; }
 .logo-text {
   font-size: 22px;
   font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: -0.01em;
   color: rgba(255,255,255,0.95);
   transition: color 0.3s;
 }
@@ -758,8 +757,7 @@ input, textarea, select { font-family: inherit; }
   font-size: 22px;
   font-weight: 800;
   color: #fff;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: -0.01em;
 }
 .footer-desc {
   font-size: 14px;
