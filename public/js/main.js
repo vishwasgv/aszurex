@@ -4,7 +4,28 @@ document.addEventListener('DOMContentLoaded', function() {
   handleContactForm();
   handleCareerForm();
   initSmoothScroll();
+  initMobileMenu();
 });
+
+function initMobileMenu() {
+  const hamburger = document.querySelector('.hamburger');
+  const navMenu = document.querySelector('.nav-menu');
+  if (!hamburger || !navMenu) return;
+
+  hamburger.addEventListener('click', () => {
+    const isOpen = navMenu.classList.toggle('nav-open');
+    hamburger.classList.toggle('active');
+    hamburger.setAttribute('aria-expanded', String(isOpen));
+  });
+
+  navMenu.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', () => {
+      navMenu.classList.remove('nav-open');
+      hamburger.classList.remove('active');
+      hamburger.setAttribute('aria-expanded', 'false');
+    });
+  });
+}
 
 function loadHomeServices() {
   const servicesGrid = document.querySelector('.services-grid');
