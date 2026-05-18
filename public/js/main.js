@@ -47,22 +47,29 @@ function loadHomeServices() {
 function loadServicesPage() {
   const allServicesGrid = document.querySelector('.all-services-grid');
   if (!allServicesGrid || !SITE_CONFIG) return;
-  
-  allServicesGrid.innerHTML = SITE_CONFIG.services.map((service, index) => `
-    <div class="service-detail-card" id="${service.id}">
-      <div class="service-icon ${[3, 4, 5].includes(index) ? 'featured' : ''}">
-        ${service.icon}
-      </div>
-      <h3 class="service-title">${service.title}</h3>
-      <p class="service-description">${service.description}</p>
-      <div class="service-features-section">
-        <h4>WHAT WE DO:</h4>
-        <ul class="service-features">
-          ${service.features.map(feature => `<li>${feature}</li>`).join('')}
-        </ul>
-      </div>
-    </div>
-  `).join('');
+
+  allServicesGrid.innerHTML = SITE_CONFIG.services.map((service) => {
+    const imgHtml = service.image
+      ? `<div class="service-card-img-wrap"><img class="service-card-img" src="${service.image}" alt="${service.title}" loading="lazy" width="400" height="168"></div>`
+      : '';
+    const open  = service.image ? '<div class="service-card-content">' : '';
+    const close = service.image ? '</div>' : '';
+    return `
+    <div class="service-detail-card${service.image ? ' has-img' : ''}" id="${service.id}">
+      ${imgHtml}
+      ${open}
+        <div class="service-icon">${service.icon}</div>
+        <h3 class="service-title">${service.title}</h3>
+        <p class="service-description">${service.description}</p>
+        <div class="service-features-section">
+          <h4>WHAT WE DO:</h4>
+          <ul class="service-features">
+            ${service.features.map(f => `<li>${f}</li>`).join('')}
+          </ul>
+        </div>
+      ${close}
+    </div>`;
+  }).join('');
 }
 
 function handleContactForm() {
