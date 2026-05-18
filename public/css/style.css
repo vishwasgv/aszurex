@@ -181,14 +181,31 @@ input, textarea, select { font-family: inherit; }
   border-radius: 16px;
   flex-shrink: 0;
 }
+.logo-wordmark {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
 .logo-text {
   font-size: 28px;
   font-weight: 800;
   letter-spacing: -0.01em;
   color: rgba(255,255,255,0.95);
   transition: color 0.3s;
+  line-height: 1;
+}
+.logo-tagline {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-style: italic;
+  color: var(--accent-lt);
+  line-height: 1;
+  transition: color 0.3s;
 }
 .navbar.nav-light .logo-text { color: var(--text); }
+.navbar.nav-light .logo-tagline { color: var(--accent); }
 
 .nav-menu {
   display: flex;
@@ -749,11 +766,26 @@ input, textarea, select { font-family: inherit; }
   border-radius: 16px;
   flex-shrink: 0;
 }
+.footer-brand-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
 .footer-brand {
   font-size: 28px;
   font-weight: 800;
   color: #fff;
   letter-spacing: -0.01em;
+  line-height: 1;
+}
+.footer-tagline {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-style: italic;
+  color: var(--accent-lt);
+  line-height: 1;
 }
 .footer-desc {
   font-size: 14px;
