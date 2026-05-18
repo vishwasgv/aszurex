@@ -174,10 +174,20 @@ input, textarea, select { font-family: inherit; }
   flex-shrink: 0;
 }
 .logo-icon { width: 44px; height: 22px; flex-shrink: 0; }
+.logo-icon-img {
+  height: 40px;
+  width: 40px;
+  object-fit: contain;
+  border-radius: 8px;
+  background: #fff;
+  padding: 4px;
+  flex-shrink: 0;
+}
 .logo-text {
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 800;
-  letter-spacing: -0.02em;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: rgba(255,255,255,0.95);
   transition: color 0.3s;
 }
@@ -735,11 +745,21 @@ input, textarea, select { font-family: inherit; }
   margin-bottom: 16px;
 }
 .footer-logo { width: 44px; height: 22px; }
+.footer-logo-img {
+  height: 40px;
+  width: 40px;
+  object-fit: contain;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.12);
+  padding: 4px;
+  flex-shrink: 0;
+}
 .footer-brand {
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 800;
   color: #fff;
-  letter-spacing: -0.02em;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 .footer-desc {
   font-size: 14px;
