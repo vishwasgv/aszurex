@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
   handleCareerForm();
   initSmoothScroll();
   initMobileMenu();
+  initNavScroll();
 });
 
 function initMobileMenu() {
@@ -165,6 +166,25 @@ function showMessage(type, message) {
     messageDiv.style.animation = 'slideOut 0.3s ease';
     setTimeout(() => messageDiv.remove(), 300);
   }, 5000);
+}
+
+function initNavScroll() {
+  const navbar = document.querySelector('.navbar');
+  if (!navbar) return;
+  const darkTop = document.querySelector('.hero-dark, .page-header');
+  if (!darkTop) {
+    navbar.classList.add('nav-light');
+    return;
+  }
+  const update = () => {
+    if (darkTop.getBoundingClientRect().bottom <= 0) {
+      navbar.classList.add('nav-light');
+    } else {
+      navbar.classList.remove('nav-light');
+    }
+  };
+  window.addEventListener('scroll', update, { passive: true });
+  update();
 }
 
 function initSmoothScroll() {
