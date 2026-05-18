@@ -25,7 +25,7 @@
   --radius-xl: 28px;
   --shadow:    0 4px 24px rgba(13,19,33,0.09);
   --shadow-lg: 0 20px 60px rgba(13,19,33,0.14);
-  --nav-h:     80px;
+  --nav-h:     90px;
   --section:   108px;
   --container: 1200px;
 }
@@ -175,10 +175,10 @@ input, textarea, select { font-family: inherit; }
 }
 .logo-icon { width: 44px; height: 22px; flex-shrink: 0; }
 .logo-icon-img {
-  height: 54px;
-  width: 54px;
+  height: 72px;
+  width: 72px;
   object-fit: cover;
-  border-radius: 12px;
+  border-radius: 14px;
   flex-shrink: 0;
 }
 .logo-text {
@@ -743,10 +743,10 @@ input, textarea, select { font-family: inherit; }
 }
 .footer-logo { width: 44px; height: 22px; }
 .footer-logo-img {
-  height: 54px;
-  width: 54px;
+  height: 72px;
+  width: 72px;
   object-fit: cover;
-  border-radius: 12px;
+  border-radius: 14px;
   flex-shrink: 0;
 }
 .footer-brand {
@@ -1520,7 +1520,7 @@ input, textarea, select { font-family: inherit; }
 }
 
 @media (max-width: 768px) {
-  :root { --section: 60px; --nav-h: 64px; }
+  :root { --section: 60px; --nav-h: 80px; }
   .container { padding: 0 20px; }
 
   .hamburger { display: flex; }
