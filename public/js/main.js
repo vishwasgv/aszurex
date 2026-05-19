@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', function() {
   initSmoothScroll();
   initMobileMenu();
   initNavScroll();
+  initPageScroll();
 });
 
 function initMobileMenu() {
@@ -209,6 +210,95 @@ function initSmoothScroll() {
   });
 }
 
+function initPageScroll() {
+  const sequence = ['/', '/services.html', '/about.html', '/careers.html', '/contact.html'];
+  const names    = ['Home', 'Services', 'About', 'Careers', 'Contact'];
+
+  const path = window.location.pathname;
+  const idx  = sequence.findIndex(p =>
+    p === '/'
+      ? (path === '/' || path === '/index.html' || path === '')
+      : path === p || path.endsWith(p.replace('/', ''))
+  );
+
+  if (idx === -1) return;
+
+  const nextUrl  = sequence[idx + 1] || null;
+  const prevUrl  = sequence[idx - 1] || null;
+  const nextName = names[idx + 1]    || null;
+
+  // Fade-in if arriving via scroll navigation
+  if (sessionStorage.getItem('scroll-nav')) {
+    sessionStorage.removeItem('scroll-nav');
+    document.body.style.animation = 'pageFadeIn 0.35s ease both';
+  }
+
+  // Build hint pill
+  if (nextUrl) {
+    const hint = document.createElement('div');
+    hint.id = 'page-scroll-hint';
+    hint.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>${nextName}`;
+    document.body.appendChild(hint);
+
+    window.addEventListener('scroll', () => {
+      const nearBottom = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 200;
+      hint.classList.toggle('visible', nearBottom);
+    }, { passive: true });
+  }
+
+  let transitioning = false;
+  let accumDown = 0;
+  let accumUp   = 0;
+  let resetTimer = null;
+  const THRESHOLD = 400;
+
+  window.addEventListener('wheel', (e) => {
+    if (transitioning) return;
+
+    clearTimeout(resetTimer);
+    resetTimer = setTimeout(() => { accumDown = 0; accumUp = 0; }, 700);
+
+    const atBottom = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 4;
+    const atTop    = window.scrollY <= 0;
+
+    if (e.deltaY > 0 && atBottom && nextUrl) {
+      accumDown += e.deltaY;
+      accumUp = 0;
+      if (accumDown >= THRESHOLD) goTo(nextUrl);
+    } else if (e.deltaY < 0 && atTop && prevUrl) {
+      accumUp += Math.abs(e.deltaY);
+      accumDown = 0;
+      if (accumUp >= THRESHOLD) goTo(prevUrl);
+    } else {
+      accumDown = 0;
+      accumUp   = 0;
+    }
+  }, { passive: true });
+
+  // Touch swipe support
+  let touchStartY = 0;
+  window.addEventListener('touchstart', e => { touchStartY = e.touches[0].clientY; }, { passive: true });
+  window.addEventListener('touchend', e => {
+    if (transitioning) return;
+    const dy      = touchStartY - e.changedTouches[0].clientY;
+    const atBottom = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 4;
+    const atTop    = window.scrollY <= 0;
+    if (dy >  55 && atBottom && nextUrl) goTo(nextUrl);
+    if (dy < -55 && atTop    && prevUrl) goTo(prevUrl);
+  }, { passive: true });
+
+  function goTo(url) {
+    if (transitioning) return;
+    transitioning = true;
+    sessionStorage.setItem('scroll-nav', '1');
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:#06090F;opacity:0;transition:opacity 0.35s ease;z-index:9999;pointer-events:none;';
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => { overlay.style.opacity = '1'; });
+    setTimeout(() => { window.location.href = url; }, 370);
+  }
+}
+
 const style = document.createElement('style');
 style.textContent = `
   @keyframes slideIn {
@@ -218,6 +308,10 @@ style.textContent = `
   @keyframes slideOut {
     from { transform: translateX(0); opacity: 1; }
     to { transform: translateX(400px); opacity: 0; }
+  }
+  @keyframes pageFadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
 `;
 document.head.appendChild(style);
