@@ -1723,3 +1723,50 @@ input, textarea, select { font-family: inherit; }
   .benefits-grid { grid-template-columns: 1fr; }
   .benefit-card { border-radius: var(--radius) !important; }
 }
+
+/* ── Scroll-margin for anchored sections ─────────────── */
+[id] { scroll-margin-top: var(--nav-h); }
+
+/* ── Section header dark (replaces page-header in one-page context) ── */
+.section-hdr-dark {
+  background: var(--bg-dark);
+  padding: var(--section) 0;
+  position: relative;
+  overflow: hidden;
+}
+.section-hdr-dark::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(14,165,233,0.05) 1px, transparent 1px);
+  background-size: 36px 36px;
+  pointer-events: none;
+}
+.section-hdr-dark::after {
+  content: '';
+  position: absolute;
+  top: -150px; right: -80px;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(14,165,233,0.08) 0%, transparent 65%);
+  pointer-events: none;
+}
+.section-hdr-inner {
+  position: relative;
+  z-index: 1;
+  max-width: 720px;
+}
+
+/* ── Scroll reveal animations ────────────────────────── */
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.65s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1; transform: none; transition: none; }
+}

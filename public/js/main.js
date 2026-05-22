@@ -1,12 +1,20 @@
 document.addEventListener('DOMContentLoaded', function() {
-  loadHomeServices();
+  const isOnePage = !!document.getElementById('home');
+
   loadServicesPage();
   handleContactForm();
-  handleCareerForm();
-  initSmoothScroll();
   initMobileMenu();
   initNavScroll();
-  initPageScroll();
+
+  if (isOnePage) {
+    initSmoothScroll();
+    initActiveNav();
+    initScrollReveal();
+  } else {
+    initSmoothScroll();
+    handleCareerForm();
+    initPageScroll();
+  }
 });
 
 function initMobileMenu() {
@@ -27,22 +35,6 @@ function initMobileMenu() {
       hamburger.setAttribute('aria-expanded', 'false');
     });
   });
-}
-
-function loadHomeServices() {
-  const servicesGrid = document.querySelector('.services-grid');
-  if (!servicesGrid || !SITE_CONFIG) return;
-  
-  const servicesToShow = SITE_CONFIG.services.slice(0, 6);
-  servicesGrid.innerHTML = servicesToShow.map((service, index) => `
-    <div class="service-card">
-      <div class="service-icon ${index === 4 ? 'featured' : ''}">
-        ${service.icon}
-      </div>
-      <h3 class="service-title">${service.title}</h3>
-      <p class="service-description">${service.description}</p>
-    </div>
-  `).join('');
 }
 
 function loadServicesPage() {
@@ -76,21 +68,21 @@ function loadServicesPage() {
 function handleContactForm() {
   const contactForm = document.getElementById('contactForm');
   if (!contactForm) return;
-  
+
   contactForm.addEventListener('submit', async function(e) {
     e.preventDefault();
     const submitBtn = contactForm.querySelector('button[type="submit"]');
     const originalText = submitBtn.textContent;
     submitBtn.disabled = true;
     submitBtn.textContent = 'Sending...';
-    
+
     const formData = {
       name: document.getElementById('name').value,
       email: document.getElementById('email').value,
       company: document.getElementById('company').value,
       message: document.getElementById('message').value
     };
-    
+
     try {
       const response = await fetch('/api/contact', {
         method: 'POST',
@@ -104,7 +96,7 @@ function handleContactForm() {
       } else {
         showMessage('error', result.message || 'Failed to send message.');
       }
-    } catch (error) {
+    } catch {
       showMessage('error', 'An error occurred. Please try again.');
     } finally {
       submitBtn.disabled = false;
@@ -116,14 +108,14 @@ function handleContactForm() {
 function handleCareerForm() {
   const careerForm = document.getElementById('careerForm');
   if (!careerForm) return;
-  
+
   careerForm.addEventListener('submit', async function(e) {
     e.preventDefault();
     const submitBtn = careerForm.querySelector('button[type="submit"]');
     const originalText = submitBtn.textContent;
     submitBtn.disabled = true;
     submitBtn.textContent = 'Submitting...';
-    
+
     const formData = new FormData();
     formData.append('name', document.getElementById('applicantName').value);
     formData.append('email', document.getElementById('applicantEmail').value);
@@ -131,17 +123,11 @@ function handleCareerForm() {
     formData.append('position', document.getElementById('position').value);
     formData.append('experience', document.getElementById('experience').value);
     formData.append('coverLetter', document.getElementById('coverLetter').value);
-    
     const resumeFile = document.getElementById('resume').files[0];
-    if (resumeFile) {
-      formData.append('resume', resumeFile);
-    }
-    
+    if (resumeFile) formData.append('resume', resumeFile);
+
     try {
-      const response = await fetch('/api/apply', {
-        method: 'POST',
-        body: formData
-      });
+      const response = await fetch('/api/apply', { method: 'POST', body: formData });
       const result = await response.json();
       if (result.success) {
         showMessage('success', 'Application submitted successfully!');
@@ -149,7 +135,7 @@ function handleCareerForm() {
       } else {
         showMessage('error', result.message || 'Failed to submit application.');
       }
-    } catch (error) {
+    } catch {
       showMessage('error', 'An error occurred. Please try again.');
     } finally {
       submitBtn.disabled = false;
@@ -200,9 +186,9 @@ function initSmoothScroll() {
     anchor.addEventListener('click', function(e) {
       const href = this.getAttribute('href');
       if (href !== '#' && href !== '#!') {
-        e.preventDefault();
         const target = document.querySelector(href);
         if (target) {
+          e.preventDefault();
           target.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
       }
@@ -210,6 +196,93 @@ function initSmoothScroll() {
   });
 }
 
+/* ── One-page: active nav based on scroll position ─── */
+function initActiveNav() {
+  const sectionIds = ['home', 'services', 'about', 'careers', 'contact'];
+  const sections = sectionIds.map(id => document.getElementById(id)).filter(Boolean);
+  const navLinks = document.querySelectorAll('.nav-menu a');
+  const navH = parseFloat(
+    getComputedStyle(document.documentElement).getPropertyValue('--nav-h')
+  ) || 100;
+
+  function getActiveSection() {
+    const scrollY = window.scrollY + navH + 8;
+    let active = sections[0];
+    for (const s of sections) {
+      if (s.offsetTop <= scrollY) active = s;
+    }
+    return active;
+  }
+
+  function updateNav() {
+    const active = getActiveSection();
+    navLinks.forEach(link => {
+      const href = link.getAttribute('href');
+      link.classList.toggle('active', href === `#${active.id}`);
+    });
+  }
+
+  window.addEventListener('scroll', updateNav, { passive: true });
+  updateNav();
+}
+
+/* ── One-page: scroll-reveal via IntersectionObserver ─ */
+function initScrollReveal() {
+  const vh = window.innerHeight;
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('is-visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+  function revealEl(el, delay) {
+    if (el.getBoundingClientRect().top >= vh * 0.92) {
+      el.classList.add('reveal');
+      if (delay > 0) el.style.transitionDelay = `${delay}s`;
+      observer.observe(el);
+    }
+  }
+
+  // Staggered grid children
+  const grids = [
+    ['.services-ed-list', '.sed-item'],
+    ['.work-grid', '.work-card'],
+    ['.process-grid', '.process-step'],
+    ['.testi-grid', '.testi-card'],
+    ['.qual-grid', '.qual-card'],
+    ['.service-area-grid', '.service-area-card'],
+    ['.all-services-grid', '.service-detail-card'],
+    ['.values-grid', '.value-card'],
+    ['.benefits-grid', '.benefit-card'],
+    ['.proof-grid', '.proof-card'],
+    ['.stats-grid', '.stat-item'],
+  ];
+
+  grids.forEach(([gridSel, itemSel]) => {
+    const grid = document.querySelector(gridSel);
+    if (!grid) return;
+    grid.querySelectorAll(itemSel).forEach((el, i) => revealEl(el, (i % 4) * 0.09));
+  });
+
+  // Block elements
+  [
+    '.about-img-wrap', '.about-text', '.careers-cta-box', '.careers-text',
+    '.contact-form-wrap', '.contact-info-img', '.contact-item', '.contact-why-box',
+    '.process-visual-wrap', '.about-workflow-visual', '.careers-culture-img',
+    '.hero-float-card', '.vision-callout', '.founder-philosophy',
+  ].forEach(sel => {
+    document.querySelectorAll(sel).forEach(el => revealEl(el, 0));
+  });
+
+  // Section header blocks
+  document.querySelectorAll('.section-hdr-inner').forEach(el => revealEl(el, 0));
+}
+
+/* ── Legacy multi-page scroll navigation ─────────────── */
 function initPageScroll() {
   const sequence = ['/', '/services.html', '/about.html', '/careers.html', '/contact.html'];
   const names    = ['Home', 'Services', 'About', 'Careers', 'Contact'];
@@ -220,14 +293,12 @@ function initPageScroll() {
       ? (path === '/' || path === '/index.html' || path === '')
       : path === p || path.endsWith(p.replace('/', ''))
   );
-
   if (idx === -1) return;
 
   const nextUrl  = sequence[idx + 1] || null;
   const prevUrl  = sequence[idx - 1] || null;
   const nextName = names[idx + 1]    || null;
 
-  // Build hint pill + prefetch next page when near bottom
   let prefetched = false;
   if (nextUrl) {
     const hint = document.createElement('div');
@@ -241,48 +312,35 @@ function initPageScroll() {
       if (nearBottom && !prefetched) {
         prefetched = true;
         const link = document.createElement('link');
-        link.rel = 'prefetch';
-        link.href = nextUrl;
+        link.rel = 'prefetch'; link.href = nextUrl;
         document.head.appendChild(link);
       }
     }, { passive: true });
   }
 
-  let transitioning = false;
-  let accumDown = 0;
-  let accumUp   = 0;
-  let resetTimer = null;
+  let transitioning = false, accumDown = 0, accumUp = 0, resetTimer = null;
   const THRESHOLD = 400;
 
   window.addEventListener('wheel', (e) => {
     if (transitioning) return;
-
     clearTimeout(resetTimer);
     resetTimer = setTimeout(() => { accumDown = 0; accumUp = 0; }, 700);
-
     const atBottom = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 4;
     const atTop    = window.scrollY <= 0;
-
     if (e.deltaY > 0 && atBottom && nextUrl) {
-      accumDown += e.deltaY;
-      accumUp = 0;
+      accumDown += e.deltaY; accumUp = 0;
       if (accumDown >= THRESHOLD) goTo(nextUrl);
     } else if (e.deltaY < 0 && atTop && prevUrl) {
-      accumUp += Math.abs(e.deltaY);
-      accumDown = 0;
+      accumUp += Math.abs(e.deltaY); accumDown = 0;
       if (accumUp >= THRESHOLD) goTo(prevUrl);
-    } else {
-      accumDown = 0;
-      accumUp   = 0;
-    }
+    } else { accumDown = 0; accumUp = 0; }
   }, { passive: true });
 
-  // Touch swipe support
   let touchStartY = 0;
   window.addEventListener('touchstart', e => { touchStartY = e.touches[0].clientY; }, { passive: true });
   window.addEventListener('touchend', e => {
     if (transitioning) return;
-    const dy      = touchStartY - e.changedTouches[0].clientY;
+    const dy = touchStartY - e.changedTouches[0].clientY;
     const atBottom = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 4;
     const atTop    = window.scrollY <= 0;
     if (dy >  55 && atBottom && nextUrl) goTo(nextUrl);
