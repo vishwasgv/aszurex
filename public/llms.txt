@@ -1,0 +1,63 @@
+# AszureX
+
+> AszureX delivers custom software development, ERP implementation, CRM solutions, API integration, and managed technical support for growing businesses worldwide.
+
+AszureX is a software development and technical support company that helps growing businesses build reliable operational infrastructure. Founded by Vishwas G V, the company operates on a people-first philosophy with a goal of employing 1,000 people within 10 years.
+
+## Core Services
+
+AszureX provides 14 specialisms across three core areas:
+
+### Custom Software Development
+- Full-stack web application development
+- Internal business tools and dashboards
+- Workflow automation systems
+- Scalable SaaS platform architecture
+- Admin panels and reporting interfaces
+
+### ERP & CRM Implementation
+- ERPNext implementation and configuration
+- Odoo setup and customization
+- HubSpot CRM setup and onboarding
+- Zoho CRM configuration
+- Sales pipeline design and automation
+- Inventory and supply chain management
+
+### Managed Technical Support
+- Technical Support L1 and L2
+- Cloud and infrastructure support
+- Application support and incident response
+- Customer success support
+- Documentation and knowledge base
+- Data and reporting support
+
+## How AszureX Works
+
+AszureX follows a four-phase delivery model on every engagement:
+1. **Discovery** — requirements mapping before any work begins
+2. **Design** — system architecture and workflows designed for scale
+3. **Build** — modern technologies with transparent milestones
+4. **Support** — post-launch maintenance and ongoing improvement
+
+## Key Facts
+
+- Free 30-minute consultation available with no obligation
+- 24-hour maximum response time guaranteed on all inquiries
+- No long-term contracts — flexible month-to-month engagement models
+- Serves businesses worldwide
+- Remote-first team
+
+## Contact
+
+- Website: https://aszurex.com
+- Email: contact@aszurex.com
+- Phone: +91 9845803993
+- Book a call: https://calendly.com/aszurex1000/30min
+
+## Pages
+
+- Home: https://aszurex.com/
+- Services: https://aszurex.com/services.html
+- About: https://aszurex.com/about.html
+- Careers: https://aszurex.com/careers.html
+- Contact: https://aszurex.com/contact.html

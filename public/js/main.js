@@ -1,20 +1,12 @@
 document.addEventListener('DOMContentLoaded', function() {
-  const isOnePage = !!document.getElementById('home');
-
   loadServicesPage();
   handleContactForm();
   initMobileMenu();
   initNavScroll();
-
-  if (isOnePage) {
-    initSmoothScroll();
-    initActiveNav();
-    initScrollReveal();
-  } else {
-    initSmoothScroll();
-    handleCareerForm();
-    initPageScroll();
-  }
+  initSmoothScroll();
+  initScrollReveal();
+  handleCareerForm();
+  initPageScroll();
 });
 
 function initMobileMenu() {
@@ -196,37 +188,6 @@ function initSmoothScroll() {
   });
 }
 
-/* ── One-page: active nav based on scroll position ─── */
-function initActiveNav() {
-  const sectionIds = ['home', 'services', 'about', 'careers', 'contact'];
-  const sections = sectionIds.map(id => document.getElementById(id)).filter(Boolean);
-  const navLinks = document.querySelectorAll('.nav-menu a');
-  const navH = parseFloat(
-    getComputedStyle(document.documentElement).getPropertyValue('--nav-h')
-  ) || 100;
-
-  function getActiveSection() {
-    const scrollY = window.scrollY + navH + 8;
-    let active = sections[0];
-    for (const s of sections) {
-      if (s.offsetTop <= scrollY) active = s;
-    }
-    return active;
-  }
-
-  function updateNav() {
-    const active = getActiveSection();
-    navLinks.forEach(link => {
-      const href = link.getAttribute('href');
-      link.classList.toggle('active', href === `#${active.id}`);
-    });
-  }
-
-  window.addEventListener('scroll', updateNav, { passive: true });
-  updateNav();
-}
-
-/* ── One-page: scroll-reveal via IntersectionObserver ─ */
 function initScrollReveal() {
   const vh = window.innerHeight;
 
@@ -247,7 +208,6 @@ function initScrollReveal() {
     }
   }
 
-  // Staggered grid children
   const grids = [
     ['.services-ed-list', '.sed-item'],
     ['.work-grid', '.work-card'],
@@ -268,7 +228,6 @@ function initScrollReveal() {
     grid.querySelectorAll(itemSel).forEach((el, i) => revealEl(el, (i % 4) * 0.09));
   });
 
-  // Block elements
   [
     '.about-img-wrap', '.about-text', '.careers-cta-box', '.careers-text',
     '.contact-form-wrap', '.contact-info-img', '.contact-item', '.contact-why-box',
@@ -278,11 +237,9 @@ function initScrollReveal() {
     document.querySelectorAll(sel).forEach(el => revealEl(el, 0));
   });
 
-  // Section header blocks
   document.querySelectorAll('.section-hdr-inner').forEach(el => revealEl(el, 0));
 }
 
-/* ── Legacy multi-page scroll navigation ─────────────── */
 function initPageScroll() {
   const sequence = ['/', '/services.html', '/about.html', '/careers.html', '/contact.html'];
   const names    = ['Home', 'Services', 'About', 'Careers', 'Contact'];

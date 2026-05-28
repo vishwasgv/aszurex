@@ -3,3 +3,22 @@ Allow: /
 Disallow: /api/
 
 Sitemap: https://aszurex.com/sitemap.xml
+
+# AI search crawlers
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+# llms.txt for AI-readable site summary
+# https://aszurex.com/llms.txt

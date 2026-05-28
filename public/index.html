@@ -51,6 +51,51 @@
       "name": "AszureX",
       "url": "https://aszurex.com",
       "publisher": { "@id": "https://aszurex.com/#organization" }
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What services does AszureX provide?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "AszureX provides 14 services including custom software development, ERP implementation (ERPNext, Odoo), CRM systems (HubSpot, Zoho), API development and integration, technical support (L1/L2), cloud and infrastructure support, customer success support, and managed technical support operations for growing businesses worldwide."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does AszureX offer a free consultation?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. AszureX offers a free 30-minute consultation with no obligation. You can book directly through the website or contact us at contact@aszurex.com. We respond to all inquiries within one business day."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does AszureX require long-term contracts?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. AszureX offers flexible engagement models with no lock-in. All support contracts offer month-to-month options — we earn continued work by delivering results, not by locking clients into multi-year agreements."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How quickly does AszureX respond to inquiries?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "AszureX guarantees a response to every inquiry within one business day — 24 hours maximum. This applies to all messages, inquiries, and support issues."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What ERP and CRM systems does AszureX implement?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "AszureX implements ERPNext and Odoo for ERP, and HubSpot CRM and Zoho CRM for customer relationship management. We handle configuration, integration, data migration, and user adoption end-to-end."
+          }
+        }
+      ]
     }
   ]
 }
@@ -72,7 +117,7 @@ gtag('config', 'G-QXB4ECJFTP');
 <!-- Navigation -->
 <nav class="navbar">
   <div class="container">
-    <a href="#home" class="logo" aria-label="AszureX Home">
+    <a href="/" class="logo" aria-label="AszureX Home">
       <img src="/aszurex-logo.png" alt="AszureX" class="logo-icon-img">
       <div class="logo-wordmark">
         <span class="logo-text">AszureX</span>
@@ -85,19 +130,16 @@ gtag('config', 'G-QXB4ECJFTP');
     </button>
 
     <ul class="nav-menu">
-      <li><a href="#home" class="active">Home</a></li>
-      <li><a href="#services">Services</a></li>
-      <li><a href="#about">About</a></li>
-      <li><a href="#careers">Careers</a></li>
-      <li><a href="#contact">Contact</a></li>
-      <li><a href="#contact" class="btn btn-accent">Start a Project →</a></li>
+      <li><a href="/" class="active">Home</a></li>
+      <li><a href="/services.html">Services</a></li>
+      <li><a href="/about.html">About</a></li>
+      <li><a href="/careers.html">Careers</a></li>
+      <li><a href="/contact.html">Contact</a></li>
+      <li><a href="/contact.html" class="btn btn-accent">Start a Project →</a></li>
     </ul>
   </div>
 </nav>
 
-<!-- ══════════════════════════════════════════════════════
-     HOME
-══════════════════════════════════════════════════════ -->
 <section class="hero-dark" id="home">
   <div class="container">
     <div class="hero-inner">
@@ -118,8 +160,8 @@ gtag('config', 'G-QXB4ECJFTP');
         </p>
 
         <div class="hero-actions">
-          <a href="#contact" class="btn btn-accent btn-lg">Start a Project →</a>
-          <a href="#services" class="btn btn-ghost btn-lg">Explore Services</a>
+          <a href="/contact.html" class="btn btn-accent btn-lg">Start a Project →</a>
+          <a href="/services.html" class="btn btn-ghost btn-lg">Explore Services</a>
         </div>
 
         <p class="hero-trust">Free 30-min consultation &nbsp;&middot;&nbsp; No lock-in &nbsp;&middot;&nbsp; Response within 24 hours</p>
@@ -177,10 +219,8 @@ gtag('config', 'G-QXB4ECJFTP');
   </div>
 </section>
 
-<!-- ══════════════════════════════════════════════════════
-     SERVICES
-══════════════════════════════════════════════════════ -->
-<section class="services-ed" id="services">
+<!-- Services Overview -->
+<section class="services-ed">
   <div class="container">
     <div class="services-ed-top">
       <div>
@@ -193,32 +233,32 @@ gtag('config', 'G-QXB4ECJFTP');
     </div>
 
     <div class="services-ed-list">
-      <a href="#custom-software" class="sed-item">
+      <a href="/services.html#custom-software" class="sed-item">
         <span class="sed-num">01</span>
         <span class="sed-name">Custom Software Development</span>
         <span class="sed-arrow">→</span>
       </a>
-      <a href="#erp-implementation" class="sed-item">
+      <a href="/services.html#erp-implementation" class="sed-item">
         <span class="sed-num">02</span>
         <span class="sed-name">ERP Implementation</span>
         <span class="sed-arrow">→</span>
       </a>
-      <a href="#crm-implementation" class="sed-item">
+      <a href="/services.html#crm-implementation" class="sed-item">
         <span class="sed-num">03</span>
         <span class="sed-name">CRM Systems &amp; Automation</span>
         <span class="sed-arrow">→</span>
       </a>
-      <a href="#api-integration" class="sed-item">
+      <a href="/services.html#api-integration" class="sed-item">
         <span class="sed-num">04</span>
         <span class="sed-name">API Development &amp; Integration</span>
         <span class="sed-arrow">→</span>
       </a>
-      <a href="#technical-l1" class="sed-item">
+      <a href="/services.html#technical-l1" class="sed-item">
         <span class="sed-num">05</span>
         <span class="sed-name">Technical Support Operations</span>
         <span class="sed-arrow">→</span>
       </a>
-      <a href="#cloud-support" class="sed-item">
+      <a href="/services.html#cloud-support" class="sed-item">
         <span class="sed-num">06</span>
         <span class="sed-name">Cloud &amp; Infrastructure Support</span>
         <span class="sed-arrow">→</span>
@@ -226,7 +266,7 @@ gtag('config', 'G-QXB4ECJFTP');
     </div>
 
     <div class="services-ed-footer">
-      <a href="#all-services" class="btn btn-outline">View all 14 services →</a>
+      <a href="/services.html" class="btn btn-outline">View all 14 services →</a>
     </div>
   </div>
 </section>
@@ -389,20 +429,6 @@ gtag('config', 'G-QXB4ECJFTP');
   </div>
 </section>
 
-<!-- Full Services Portfolio (loaded by JS) -->
-<section class="all-services" id="all-services">
-  <div class="container">
-    <div class="all-services-header">
-      <p class="eyebrow">Full Portfolio</p>
-      <h2 class="section-h2">Every service, in detail</h2>
-      <p class="section-sub" style="margin-left:auto;margin-right:auto;">14 specialisms across software development, systems implementation, and technical support operations.</p>
-    </div>
-    <div class="all-services-grid">
-      <!-- Services loaded by JavaScript from config.js -->
-    </div>
-  </div>
-</section>
-
 <!-- Process -->
 <section class="process-section">
   <div class="container">
@@ -482,245 +508,7 @@ gtag('config', 'G-QXB4ECJFTP');
       <p class="eyebrow eyebrow-inv">Let's Talk</p>
       <h2 class="section-h2 inv" style="margin-bottom:16px;">Not sure where to start?</h2>
       <p class="section-sub inv" style="margin:0 auto 40px;">Every business has different constraints, goals, and systems. Let's have a direct conversation about what you need — and design the right engagement from there.</p>
-      <a href="#contact" class="btn btn-accent btn-lg">Book a Free 30-Minute Call →</a>
-    </div>
-  </div>
-</section>
-
-<!-- ══════════════════════════════════════════════════════
-     ABOUT
-══════════════════════════════════════════════════════ -->
-<section class="section-hdr-dark" id="about">
-  <div class="container">
-    <div class="section-hdr-inner">
-      <p class="page-eyebrow">About AszureX</p>
-      <h2 class="page-h1">We exist to reduce the operational friction that holds businesses back.</h2>
-      <p class="page-sub">By building reliable software systems and managing technical support operations with clarity and structure, we give your teams room to focus on what actually matters.</p>
-    </div>
-  </div>
-</section>
-
-<!-- Founder -->
-<section class="about-section" style="background:var(--bg-alt);">
-  <div class="container">
-    <div class="about-split">
-
-      <div class="about-img-wrap">
-        <img
-          src="/founder.jpg"
-          alt="Vishwas G V, Founder of AszureX"
-          loading="eager"
-          width="800"
-          height="420"
-          style="object-position: center 35%;"
-        >
-        <div class="about-img-badge">
-          <div class="about-img-badge-title">Vishwas G V</div>
-          <div class="about-img-badge-sub">Founder, AszureX</div>
-        </div>
-      </div>
-
-      <div class="about-text">
-        <p class="eyebrow">The Founder</p>
-        <h2 class="section-h2">The goal was never to build a company. It was to build one worth working for.</h2>
-        <p class="section-sub" style="max-width:100%;margin-top:20px;">Somewhere along the way, "founder" became a title more than a calling. I don't want the title — I want to look back in ten years and know that AszureX gave a thousand people a real job, a real career, something they could build their life around. That's the number I carry. Not a revenue target. A people target.</p>
-        <p class="section-sub" style="max-width:100%;margin-top:16px;">My approach is pace. Build it, ship it, make it better. I've watched good ideas die in the planning stage — overthought, over-engineered, never shipped. The fastest way to understand what's real is to put something real in front of people and listen.</p>
-        <p class="section-sub" style="max-width:100%;margin-top:16px;">I believe clients deserve honesty — about timelines, about what's hard, and about what might not work. I'd rather lose a deal with the truth than win one with a promise I'll struggle to keep. That standard doesn't change based on the size of the contract.</p>
-
-        <div class="founder-philosophy">
-          "Pace. Make it live. Make it better."
-        </div>
-
-        <div class="vision-callout">
-          <div class="vision-num">1,000</div>
-          <div class="vision-label">People employed through AszureX within the next 10 years — not a revenue target, a people target. That's the measure I hold myself to.</div>
-        </div>
-
-        <p style="margin-top:24px;font-size:15px;font-weight:700;color:var(--text-mid);letter-spacing:0.02em;">— Vishwas G V, Founder</p>
-      </div>
-
-    </div>
-  </div>
-</section>
-
-<!-- Mission -->
-<section class="about-section">
-  <div class="container">
-    <div class="about-split">
-
-      <div class="about-text">
-        <p class="eyebrow">Our Mission</p>
-        <h2 class="section-h2">Not a vendor you call when it breaks. The team that makes sure it doesn't.</h2>
-        <p class="section-sub" style="max-width:100%;">In fast-moving businesses, time and execution are everything. Our goal is to help you save both. We build the systems and run the support operations that let your team focus on building products and serving customers — not putting out fires.</p>
-        <p class="section-sub" style="max-width:100%;margin-top:16px;">We're embedded partners, not hired hands. The difference is accountability.</p>
-
-        <ul class="about-check-list">
-          <li>Process-driven delivery across every engagement</li>
-          <li>Transparent communication from discovery to support</li>
-          <li>Accountable outcomes, not activity reports</li>
-          <li>Systems designed to last, not to launch and break</li>
-        </ul>
-      </div>
-
-      <div class="about-img-wrap">
-        <img
-          src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&q=80&auto=format&fit=crop"
-          alt="Cross-functional software team collaborating on a project in a modern office"
-          loading="lazy"
-          width="800"
-          height="420"
-        >
-        <div class="about-img-badge">
-          <div class="about-img-badge-title">Embedded partners</div>
-          <div class="about-img-badge-sub">Not transactional vendors</div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-</section>
-
-<!-- Approach -->
-<section class="about-section alt">
-  <div class="container">
-    <div class="about-split rev">
-
-      <div class="about-text">
-        <p class="eyebrow">Our Approach</p>
-        <h2 class="section-h2">An extension of your team — not an outsourced cost centre.</h2>
-        <p class="section-sub" style="max-width:100%;">We work closely with our clients to become a dependable part of their operation. Whether building software systems, implementing ERP solutions, or managing technical support, we approach every engagement with ownership — not just task completion.</p>
-        <p class="section-sub" style="max-width:100%;margin-top:16px;">Every business is different. Our services are flexible, scalable, and built to align with where you are now and where you're going. We reduce friction, save time, and deliver execution your business can count on.</p>
-      </div>
-
-      <div class="about-img-wrap">
-        <img
-          src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80&auto=format&fit=crop"
-          alt="Analytics dashboard and business metrics displayed on a laptop screen"
-          loading="lazy"
-          width="800"
-          height="420"
-        >
-        <div class="about-img-badge">
-          <div class="about-img-badge-title">Structured delivery</div>
-          <div class="about-img-badge-sub">From discovery to ongoing support</div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-</section>
-
-<!-- Workflow Visual -->
-<section class="about-section" style="padding-top:0;padding-bottom:0;">
-  <div class="container" style="padding-bottom:var(--section);">
-    <div class="about-workflow-visual">
-      <img
-        src="https://images.unsplash.com/photo-1552664730-d307ca884978?w=1400&q=80&auto=format&fit=crop"
-        alt="Software team reviewing project architecture and delivery roadmap on whiteboard"
-        loading="lazy" width="1400" height="270"
-      >
-      <div class="about-workflow-overlay"></div>
-      <div class="about-workflow-caption">
-        <h3>Discovery → Design → Build → Support</h3>
-        <p>Our four-phase delivery model runs on every engagement, at every scale.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- Values -->
-<section class="values-section">
-  <div class="container">
-    <div class="values-header">
-      <p class="eyebrow eyebrow-inv">Our Values</p>
-      <h2 class="section-h2 inv">What we believe in</h2>
-      <p class="section-sub inv">These principles shape how we work, what we prioritise, and how we make decisions — on every project, for every client.</p>
-    </div>
-
-    <div class="values-grid">
-      <div class="value-card">
-        <div class="value-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-          </svg>
-        </div>
-        <h3 class="value-title">Measurable outcomes</h3>
-        <p class="value-desc">Every action we take is aimed at delivering tangible, verifiable results — not activity, not appearances, not reports.</p>
-      </div>
-
-      <div class="value-card">
-        <div class="value-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-            <circle cx="9" cy="7" r="4"/>
-            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-          </svg>
-        </div>
-        <h3 class="value-title">Honest communication</h3>
-        <p class="value-desc">Clear, direct dialogue — no fluff, no over-promising, no hiding problems. Difficult truths early save everyone time.</p>
-      </div>
-
-      <div class="value-card">
-        <div class="value-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-          </svg>
-        </div>
-        <h3 class="value-title">Process over shortcuts</h3>
-        <p class="value-desc">We follow proven methodologies because consistency and quality matter more than velocity alone. No cutting corners.</p>
-      </div>
-
-      <div class="value-card">
-        <div class="value-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-          </svg>
-        </div>
-        <h3 class="value-title">Long-term partnerships</h3>
-        <p class="value-desc">We invest in relationships that compound in value over time. One-off engagements are the exception, not the model.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- Trust & Partnership -->
-<section class="about-section">
-  <div class="container">
-    <div class="about-split">
-
-      <div class="about-img-wrap">
-        <img
-          src="https://images.unsplash.com/photo-1553877522-43269d4ea984?w=800&q=80&auto=format&fit=crop"
-          alt="Business professionals discussing project requirements in a collaborative team meeting"
-          loading="lazy"
-          width="800"
-          height="420"
-        >
-        <div class="about-img-badge">
-          <div class="about-img-badge-title">Your success is our success</div>
-          <div class="about-img-badge-sub">Partnership-first approach</div>
-        </div>
-      </div>
-
-      <div class="about-text">
-        <p class="eyebrow">Trust &amp; Partnership</p>
-        <h2 class="section-h2">Trust is earned through delivery, not promised in proposals.</h2>
-        <p class="section-sub" style="max-width:100%;">We earn trust through consistent delivery, transparent communication, and an unwavering commitment to your outcomes — not just project completion. Every engagement is designed to compound in value the longer we work together.</p>
-
-        <ul class="about-check-list">
-          <li>Dedicated resources on every engagement</li>
-          <li>Regular progress updates and performance reviews</li>
-          <li>Flexible models with no lock-in required</li>
-          <li>Continuous improvement built into every contract</li>
-        </ul>
-
-        <div style="margin-top:32px;display:flex;flex-wrap:wrap;gap:12px;">
-          <a href="#contact" class="btn btn-accent">Start a Conversation →</a>
-          <a href="#services" class="btn btn-outline">View Our Services</a>
-        </div>
-      </div>
-
+      <a href="/contact.html" class="btn btn-accent btn-lg">Book a Free 30-Minute Call →</a>
     </div>
   </div>
 </section>
@@ -802,248 +590,6 @@ gtag('config', 'G-QXB4ECJFTP');
   </div>
 </section>
 
-<!-- ══════════════════════════════════════════════════════
-     CAREERS
-══════════════════════════════════════════════════════ -->
-<section class="section-hdr-dark" id="careers">
-  <div class="container">
-    <div class="section-hdr-inner">
-      <p class="page-eyebrow">Join the Team</p>
-      <h2 class="page-h1">We hire people who take ownership and care about doing good work.</h2>
-      <p class="page-sub">We're building a team of people who communicate clearly, move with purpose, and are genuinely invested in the businesses we serve.</p>
-    </div>
-  </div>
-</section>
-
-<div class="careers-visual">
-  <img
-    src="https://images.unsplash.com/photo-1568992687947-868a62a9f521?w=1400&q=80&auto=format&fit=crop"
-    alt="Software team in a collaborative workshop session — natural working culture and team energy"
-    loading="lazy"
-    width="1400"
-    height="420"
-  >
-</div>
-
-<section class="careers-body">
-  <div class="container">
-    <div class="careers-grid">
-
-      <div class="careers-text">
-        <p class="eyebrow">Open Positions</p>
-        <h2 class="section-h2">We're growing — and will be hiring soon.</h2>
-        <p>Thank you for your interest in AszureX. We're actively building our team and will have positions available in the near term. Check back here, or reach out directly — we're always open to hearing from the right people.</p>
-        <p>We look for people who care about craft, communicate with honesty, and take ownership of outcomes rather than tasks. If that sounds like you, we'd like to hear from you even before a role is posted.</p>
-
-        <div style="margin-top:32px;display:flex;flex-direction:column;gap:10px;">
-          <div style="display:flex;align-items:center;gap:10px;font-size:15px;color:var(--text-mid);">
-            <span style="color:var(--accent);font-weight:700;">✓</span> Remote-first with flexible hours
-          </div>
-          <div style="display:flex;align-items:center;gap:10px;font-size:15px;color:var(--text-mid);">
-            <span style="color:var(--accent);font-weight:700;">✓</span> Outcome-driven, not hours-driven
-          </div>
-          <div style="display:flex;align-items:center;gap:10px;font-size:15px;color:var(--text-mid);">
-            <span style="color:var(--accent);font-weight:700;">✓</span> Direct impact from day one
-          </div>
-          <div style="display:flex;align-items:center;gap:10px;font-size:15px;color:var(--text-mid);">
-            <span style="color:var(--accent);font-weight:700;">✓</span> Market-rate compensation, room to grow
-          </div>
-        </div>
-      </div>
-
-      <div class="careers-cta-box">
-        <h3>Interested in joining?</h3>
-        <p>Positions are coming soon. In the meantime, feel free to send your CV — if you're a strong fit, we'll keep you in mind for upcoming roles.</p>
-
-        <div style="display:flex;flex-direction:column;gap:12px;">
-          <a href="#contact" class="btn btn-accent">Get in Touch →</a>
-          <a href="#about" class="btn btn-outline">Learn About AszureX</a>
-        </div>
-
-        <a
-          href="https://mail.google.com/mail/?view=cm&to=contact@aszurex.com&su=Job+Application+%E2%80%94+Resume+Submission&body=Hi+AszureX+Team%2C%0A%0AI%27m+interested+in+working+with+AszureX.+Please+find+my+resume+attached.%0A%0AName%3A%0APhone%3A%0APosition+of+Interest%3A%0A%0AThank+you!"
-          class="careers-email-link"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-            <polyline points="22,6 12,13 2,6"/>
-          </svg>
-          Or email your resume directly
-        </a>
-      </div>
-
-    </div>
-  </div>
-</section>
-
-<!-- Benefits -->
-<section class="benefits-section">
-  <div class="container">
-    <div class="careers-culture-img">
-      <img
-        src="https://images.unsplash.com/photo-1573496799652-408c2ac9fe98?w=1400&q=80&auto=format&fit=crop"
-        alt="Modern collaborative workspace showing team culture and professional working environment"
-        loading="lazy" width="1400" height="300"
-      >
-    </div>
-    <div class="benefits-header">
-      <p class="eyebrow eyebrow-inv">Why Join Us</p>
-      <h2 class="section-h2 inv">What working at AszureX looks like</h2>
-      <p class="section-sub inv">When we start hiring, here's what you can expect from day one.</p>
-    </div>
-
-    <div class="benefits-grid">
-      <div class="benefit-card">
-        <span class="benefit-icon">💰</span>
-        <h3 class="benefit-title">Competitive Compensation</h3>
-        <p class="benefit-desc">Market-rate pay with clear growth paths as the company scales. We believe in paying well for great work.</p>
-      </div>
-      <div class="benefit-card">
-        <span class="benefit-icon">🌍</span>
-        <h3 class="benefit-title">Remote-First</h3>
-        <p class="benefit-desc">Work from anywhere, structured around outcomes — not face time or office presence.</p>
-      </div>
-      <div class="benefit-card">
-        <span class="benefit-icon">📚</span>
-        <h3 class="benefit-title">Learning &amp; Development</h3>
-        <p class="benefit-desc">Continuous learning is expected and supported — tools, courses, and dedicated time to grow your craft.</p>
-      </div>
-      <div class="benefit-card">
-        <span class="benefit-icon">🏥</span>
-        <h3 class="benefit-title">Health Benefits</h3>
-        <p class="benefit-desc">Comprehensive health coverage for you and your dependants. Your wellbeing matters to us.</p>
-      </div>
-      <div class="benefit-card">
-        <span class="benefit-icon">⚡</span>
-        <h3 class="benefit-title">Direct Impact</h3>
-        <p class="benefit-desc">A focused team where your work has real, visible impact — no layers of bureaucracy, no invisible contributions.</p>
-      </div>
-      <div class="benefit-card">
-        <span class="benefit-icon">🚀</span>
-        <h3 class="benefit-title">Room to Grow</h3>
-        <p class="benefit-desc">Clear ownership, expanding responsibility, and a front-row seat to building a serious business from early on.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ══════════════════════════════════════════════════════
-     CONTACT
-══════════════════════════════════════════════════════ -->
-<section class="cta-dark" id="contact">
-  <div class="container">
-    <div class="cta-dark-inner">
-      <h2 class="cta-dark-h2">Ready to build something serious?</h2>
-      <p class="cta-dark-sub">Let's talk about your systems, your team, and what you're trying to accomplish. A free 30-minute call is all it takes.</p>
-      <div class="cta-actions">
-        <a href="#contact-form" class="btn btn-accent btn-lg">Start a Conversation →</a>
-        <a href="#services" class="btn btn-ghost btn-lg">View All Services</a>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- Contact Form & Info -->
-<section class="contact-section" id="contact-form">
-  <div class="container">
-    <div class="contact-grid">
-
-      <!-- Info -->
-      <div>
-        <div class="contact-info-img">
-          <img
-            src="https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=800&q=80&auto=format&fit=crop"
-            alt="Professional working at a clean desk — calm and focused consultation environment"
-            loading="lazy" width="800" height="240"
-          >
-        </div>
-        <h2 class="contact-info-title">Reach us directly</h2>
-
-        <div class="contact-item">
-          <div class="contact-item-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-            </svg>
-          </div>
-          <div>
-            <div class="contact-label">Phone</div>
-            <a href="tel:+919845803993" class="contact-value">+91 9845803993</a>
-          </div>
-        </div>
-
-        <div class="contact-item">
-          <div class="contact-item-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-              <polyline points="22,6 12,13 2,6"/>
-            </svg>
-          </div>
-          <div>
-            <div class="contact-label">Email</div>
-            <a href="https://mail.google.com/mail/?view=cm&to=contact@aszurex.com" target="_blank" rel="noopener noreferrer" class="contact-value">contact@aszurex.com</a>
-          </div>
-        </div>
-
-        <div class="contact-why-box">
-          <h3>Why work with AszureX?</h3>
-          <ul class="contact-why-list">
-            <li>Response within one business day, guaranteed</li>
-            <li>Flexible engagement models — no lock-in</li>
-            <li>Transparent pricing and realistic timelines</li>
-            <li>Dedicated support team on every project</li>
-            <li>Structured delivery from discovery to support</li>
-          </ul>
-        </div>
-      </div>
-
-      <!-- Form -->
-      <div class="contact-form-wrap">
-        <h2 class="form-title">Send us a message</h2>
-        <p class="form-sub">Tell us about your project and we'll follow up within one business day.</p>
-
-        <form id="contactForm">
-          <div class="form-group">
-            <label class="form-label" for="name">Your Name *</label>
-            <input type="text" id="name" class="form-input" placeholder="John Doe" required>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="email">Email Address *</label>
-            <input type="email" id="email" class="form-input" placeholder="john@company.com" required>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="company">Company (Optional)</label>
-            <input type="text" id="company" class="form-input" placeholder="Your Company">
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="message">Message *</label>
-            <textarea id="message" class="form-textarea" rows="6" placeholder="Tell us about your software development or support needs..." required></textarea>
-          </div>
-          <button type="submit" class="form-submit">Send Message</button>
-        </form>
-      </div>
-
-    </div>
-  </div>
-</section>
-
-<!-- Calendly -->
-<section class="calendly-section">
-  <div class="container">
-    <div class="calendly-header">
-      <p class="eyebrow">Free Consultation</p>
-      <h2 class="section-h2">Book a free 30-minute call</h2>
-      <p class="section-sub" style="margin-left:auto;margin-right:auto;">Choose a time that works for you. We'll discuss your needs, walk you through our approach, and answer any questions — no obligation.</p>
-    </div>
-
-    <div class="calendly-inline-widget"
-         data-url="https://calendly.com/aszurex1000/30min"
-         style="min-width:320px;height:650px;">
-    </div>
-  </div>
-</section>
-
 <!-- Footer -->
 <footer class="footer">
   <div class="container">
@@ -1061,21 +607,21 @@ gtag('config', 'G-QXB4ECJFTP');
       <div>
         <p class="footer-col-title">Navigation</p>
         <ul class="footer-links">
-          <li><a href="#home">Home</a></li>
-          <li><a href="#services">Services</a></li>
-          <li><a href="#about">About</a></li>
-          <li><a href="#careers">Careers</a></li>
-          <li><a href="#contact">Contact</a></li>
+          <li><a href="/">Home</a></li>
+          <li><a href="/services.html">Services</a></li>
+          <li><a href="/about.html">About</a></li>
+          <li><a href="/careers.html">Careers</a></li>
+          <li><a href="/contact.html">Contact</a></li>
         </ul>
       </div>
       <div>
         <p class="footer-col-title">Services</p>
         <ul class="footer-links">
-          <li><a href="#custom-software">Custom Software</a></li>
-          <li><a href="#erp-implementation">ERP Implementation</a></li>
-          <li><a href="#crm-implementation">CRM Solutions</a></li>
-          <li><a href="#api-integration">API Integration</a></li>
-          <li><a href="#technical-l1">Technical Support</a></li>
+          <li><a href="/services.html#custom-software">Custom Software</a></li>
+          <li><a href="/services.html#erp-implementation">ERP Implementation</a></li>
+          <li><a href="/services.html#crm-implementation">CRM Solutions</a></li>
+          <li><a href="/services.html#api-integration">API Integration</a></li>
+          <li><a href="/services.html#technical-l1">Technical Support</a></li>
         </ul>
       </div>
       <div>
@@ -1103,7 +649,6 @@ gtag('config', 'G-QXB4ECJFTP');
   </div>
 </footer>
 
-<script src="https://assets.calendly.com/assets/external/widget.js"></script>
 <script src="js/config.js"></script>
 <script src="js/main.js"></script>
 </body>
