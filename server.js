@@ -30,9 +30,7 @@ function createTransporter() {
     auth: {
       user: ZOHO_EMAIL,
       pass: ZOHO_PASSWORD
-    },
-    connectionTimeout: 10000,
-    greetingTimeout:   10000
+    }
   });
 }
 
