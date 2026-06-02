@@ -75,37 +75,6 @@ function handleContactForm() {
       message: document.getElementById('message').value
     };
 
-    function onDone(success) {
-      submitBtn.disabled = false;
-      submitBtn.textContent = originalText;
-      if (success) {
-        showMessage('success', 'Thank you! Your message has been sent successfully.');
-        contactForm.reset();
-      } else {
-        showMessage('error', 'An error occurred. Please try again or email contact@aszurex.com directly.');
-      }
-    }
-
-    async function sendViaFormsubmit() {
-      try {
-        const r = await fetch('https://formsubmit.co/ajax/contact@aszurex.com', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-          body: JSON.stringify({
-            name:      formData.name,
-            email:     formData.email,
-            _subject:  'New Contact: ' + formData.name,
-            message:   'Company: ' + (formData.company || 'N/A') + '\n\nMessage:\n' + formData.message,
-            _template: 'table'
-          })
-        });
-        const res = await r.json();
-        onDone(res.success === true || res.success === 'true');
-      } catch {
-        onDone(false);
-      }
-    }
-
     try {
       const response = await fetch('/api/contact', {
         method: 'POST',
@@ -113,10 +82,17 @@ function handleContactForm() {
         body: JSON.stringify(formData)
       });
       const result = await response.json();
-      if (result.success) { onDone(true); }
-      else { await sendViaFormsubmit(); }
+      if (result.success) {
+        showMessage('success', 'Thank you! Your message has been sent successfully.');
+        contactForm.reset();
+      } else {
+        showMessage('error', result.message || 'Failed to send message.');
+      }
     } catch {
-      await sendViaFormsubmit();
+      showMessage('error', 'An error occurred. Please try again.');
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalText;
     }
   });
 }

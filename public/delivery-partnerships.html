@@ -1970,41 +1970,6 @@ window.addEventListener('load', function() {
     btn.disabled = true;
     btn.textContent = 'Sending...';
 
-    function onSuccess() {
-      showMessage('success', 'Enquiry sent. We\'ll respond within one business day.');
-      form.reset();
-      btn.disabled = false;
-      btn.textContent = orig;
-    }
-
-    function onFail() {
-      showMessage('error', 'Something went wrong. Please email contact@aszurex.com directly.');
-      btn.disabled = false;
-      btn.textContent = orig;
-    }
-
-    /* Fallback: send via Formsubmit if our server SMTP fails */
-    function sendViaFormsubmit() {
-      fetch('https://formsubmit.co/ajax/contact@aszurex.com', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify({
-          name:     name,
-          email:    email,
-          _subject: 'Partnership Enquiry: ' + name + (company ? ' | ' + company : ''),
-          message:  'Company: ' + (company || 'N/A') + '\n\nDelivery Challenge:\n' + message,
-          _template: 'table'
-        })
-      })
-      .then(function(r) { return r.json(); })
-      .then(function(res) {
-        if (res.success === 'true' || res.success === true) { onSuccess(); }
-        else { onFail(); }
-      })
-      .catch(onFail);
-    }
-
-    /* Primary: try our own server first */
     fetch('/api/contact', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -2017,10 +1982,20 @@ window.addEventListener('load', function() {
     })
     .then(function(r) { return r.json(); })
     .then(function(result) {
-      if (result.success) { onSuccess(); }
-      else { sendViaFormsubmit(); }   /* server responded but SMTP failed — try fallback */
+      if (result.success) {
+        showMessage('success', 'Enquiry sent. We\'ll respond within one business day.');
+        form.reset();
+      } else {
+        showMessage('error', result.message || 'Something went wrong. Please email contact@aszurex.com directly.');
+      }
     })
-    .catch(sendViaFormsubmit);        /* network error — try fallback */
+    .catch(function() {
+      showMessage('error', 'Something went wrong. Please email contact@aszurex.com directly.');
+    })
+    .finally(function() {
+      btn.disabled = false;
+      btn.textContent = orig;
+    });
   });
 })();
 </script>
