@@ -19,20 +19,27 @@ if (!ZOHO_EMAIL || !ZOHO_PASSWORD || !TO_EMAIL) {
   });
 }
 
-// ── Nodemailer transporter ─────────────────────────────────
-const transporter = nodemailer.createTransport({
-  host: 'smtp.zoho.com',
-  port: 587,
-  secure: false,
-  requireTLS: true,
-  auth: {
-    user: ZOHO_EMAIL,
-    pass: ZOHO_PASSWORD
-  }
-});
+// ── Nodemailer transporter factory ────────────────────────────
+// Fresh transporter per send — avoids stale TCP connections after
+// server idle periods which cause sendMail to silently fail.
+function createTransporter() {
+  return nodemailer.createTransport({
+    host: 'smtp.zoho.com',
+    port: 587,
+    secure: false,
+    requireTLS: true,
+    auth: {
+      user: ZOHO_EMAIL,
+      pass: ZOHO_PASSWORD
+    },
+    connectionTimeout: 10000,
+    greetingTimeout:   10000,
+    socketTimeout:     10000
+  });
+}
 
-// Verify SMTP connection at startup
-transporter.verify((error) => {
+// Verify SMTP credentials at startup (fresh connection, not reused)
+createTransporter().verify((error) => {
   if (error) {
     console.error('❌ SMTP connection failed:', error.message, '| code:', error.code);
   } else {
@@ -75,21 +82,51 @@ app.post('/api/contact', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Please fill in all required fields.' });
     }
 
-    await transporter.sendMail({
-      from:    `"AszureX" <${ZOHO_EMAIL}>`,
-      to:      TO_EMAIL,
-      replyTo: email,
-      subject: `New Contact: ${name}`,
-      html: `
-        <h3>New Contact Form Submission</h3>
+    const isPartnership = message.startsWith('[Delivery Partnership Enquiry]');
+    const cleanMessage  = message
+      .replace('[Delivery Partnership Enquiry]', '')
+      .trim()
+      .replace(/\n/g, '<br>');
+
+    const subject = isPartnership
+      ? `Partnership Enquiry: ${name} — ${company || 'No company'}`
+      : `New Contact: ${name}`;
+
+    const html = isPartnership ? `
+      <div style="font-family:Arial,sans-serif;max-width:600px;">
+        <h2 style="color:#0EA5E9;border-bottom:2px solid #0EA5E9;padding-bottom:8px;">
+          New Delivery Partnership Enquiry
+        </h2>
+        <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
+          <tr><td style="padding:8px 0;color:#666;width:120px;"><b>Name</b></td><td>${name}</td></tr>
+          <tr><td style="padding:8px 0;color:#666;"><b>Company</b></td><td>${company || 'Not provided'}</td></tr>
+          <tr><td style="padding:8px 0;color:#666;"><b>Email</b></td><td><a href="mailto:${email}">${email}</a></td></tr>
+        </table>
+        <p style="color:#666;margin-bottom:8px;"><b>Delivery Challenge:</b></p>
+        <div style="background:#f7f9fc;border-left:4px solid #0EA5E9;padding:16px;border-radius:4px;line-height:1.7;">
+          ${cleanMessage}
+        </div>
+        <p style="color:#999;font-size:12px;margin-top:24px;">Submitted via delivery-partnerships page</p>
+      </div>
+    ` : `
+      <div style="font-family:Arial,sans-serif;max-width:600px;">
+        <h3 style="color:#0D1321;">New Contact Form Submission</h3>
         <p><b>Name:</b> ${name}</p>
         <p><b>Email:</b> ${email}</p>
         <p><b>Company:</b> ${company || 'N/A'}</p>
-        <p><b>Message:</b> ${message}</p>
-      `
+        <p><b>Message:</b><br>${message.replace(/\n/g, '<br>')}</p>
+      </div>
+    `;
+
+    await createTransporter().sendMail({
+      from:    `"AszureX" <${ZOHO_EMAIL}>`,
+      to:      TO_EMAIL,
+      replyTo: email,
+      subject,
+      html
     });
 
-    console.log(`✅ Contact email sent — from: ${email}`);
+    console.log(`✅ ${isPartnership ? 'Partnership enquiry' : 'Contact email'} sent — from: ${email}`);
     return res.json({ success: true, message: 'Message sent! We\'ll be in touch within one business day.' });
 
   } catch (error) {
@@ -107,7 +144,7 @@ app.post('/api/apply', upload.single('resume'), async (req, res) => {
     const { name, email, phone, position, experience, coverLetter } = req.body;
     const resume = req.file;
 
-    await transporter.sendMail({
+    await createTransporter().sendMail({
       from:    `"AszureX" <${ZOHO_EMAIL}>`,
       to:      TO_EMAIL,
       replyTo: email,
