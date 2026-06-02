@@ -241,8 +241,8 @@ function initScrollReveal() {
 }
 
 function initPageScroll() {
-  const sequence = ['/', '/services.html', '/about.html', '/careers.html', '/contact.html'];
-  const names    = ['Home', 'Services', 'About', 'Careers', 'Contact'];
+  const sequence = ['/', '/services.html', '/about.html', '/careers.html', '/delivery-partnerships', '/contact.html'];
+  const names    = ['Home', 'Services', 'About', 'Careers', 'Partners', 'Contact'];
 
   const path = window.location.pathname;
   const idx  = sequence.findIndex(p =>
