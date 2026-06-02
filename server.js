@@ -117,15 +117,14 @@ app.post('/api/contact', async (req, res) => {
       html
     });
 
-    console.log(`✅ ${isPartnership ? 'Partnership enquiry' : 'Contact email'} sent — from: ${email}`);
+    console.log(`✅ Contact email sent [${type}] — from: ${email}`);
     return res.json({ success: true, message: 'Message sent! We\'ll be in touch within one business day.' });
 
   } catch (error) {
     console.error('❌ Contact email error:', error.message, '| code:', error.code, '| response:', error.response);
     return res.status(500).json({
       success: false,
-      message: 'Failed to send message. Please email us directly at contact@aszurex.com',
-      debug: { code: error.code || null, error: error.message || null }
+      message: 'Failed to send message. Please email us directly at contact@aszurex.com'
     });
   }
 });

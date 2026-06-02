@@ -88,8 +88,7 @@ function handleContactForm() {
         showMessage('success', 'Thank you! Your message has been sent successfully.');
         contactForm.reset();
       } else {
-        const detail = result.debug ? ' [' + (result.debug.code || result.debug.error) + ']' : '';
-        showMessage('error', (result.message || 'Failed to send message.') + detail);
+        showMessage('error', result.message || 'Failed to send message.');
       }
     } catch {
       showMessage('error', 'An error occurred. Please try again.');
