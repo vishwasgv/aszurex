@@ -1867,6 +1867,7 @@ window.addEventListener('load', function() {
     ['.dp-cap-grid',       '.dp-cap-card'],
     ['.dp-model-grid',     '.dp-model-card'],
     ['.dp-value-grid',     '.dp-value-card'],
+    ['.dp-position-grid',  '.dp-position-col'],
     ['.dp-start-grid',     '.dp-start-step'],
     ['.dp-scenarios-list', '.dp-scenario-item'],
     ['.dp-timeline',       '.dp-tl-step'],
@@ -1878,13 +1879,21 @@ window.addEventListener('load', function() {
     grid.querySelectorAll(p[1]).forEach(function(el, i) {
       if (el.getBoundingClientRect().top >= vh * 0.90) {
         el.classList.add('reveal');
-        if (i > 0) el.style.transitionDelay = (Math.min(i % 5, 4) * 0.08) + 's';
+        if (i > 0) el.style.transitionDelay = (Math.min(i % 4, 3) * 0.09) + 's';
         obs.observe(el);
       }
     });
   });
 
-  ['.dp-nda-split .about-img-wrap', '.dp-hero-badge', '.dp-for-strip'].forEach(function(sel) {
+  /* Single elements — animate as one unit */
+  var singles = [
+    '.dp-hero-badge',
+    '.dp-for-strip',
+    '.dp-inline-cta-inner',
+    '.dp-nda-split .about-img-wrap',
+    '.dp-partnerform-grid > div:first-child',
+  ];
+  singles.forEach(function(sel) {
     document.querySelectorAll(sel).forEach(function(el) {
       if (el.getBoundingClientRect().top >= vh * 0.90) {
         el.classList.add('reveal');
