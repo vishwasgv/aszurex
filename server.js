@@ -75,23 +75,18 @@ const upload = multer({
 // ── Contact form ───────────────────────────────────────────
 app.post('/api/contact', async (req, res) => {
   try {
-    const { name, email, company, message } = req.body;
+    const { name, email, company, enquiryType, message } = req.body;
 
     if (!name || !email || !message) {
       return res.status(400).json({ success: false, message: 'Please fill in all required fields.' });
     }
 
-    const isPartnership = message.startsWith('[Delivery Partnership Enquiry]');
-    const cleanMessage  = message
-      .replace('[Delivery Partnership Enquiry]', '')
-      .trim()
-      .replace(/\n/g, '<br>');
-
-    const subject = isPartnership
+    const type    = enquiryType || 'General Enquiry';
+    const subject = type === 'Delivery Partnership'
       ? `Partnership Enquiry: ${name} | ${company || 'No company'}`
-      : `New Contact: ${name}`;
+      : `New Contact [${type}]: ${name}`;
 
-    const html = isPartnership ? `
+    const html = type === 'Delivery Partnership' ? `
       <div style="font-family:Arial,sans-serif;max-width:600px;">
         <h2 style="color:#0EA5E9;border-bottom:2px solid #0EA5E9;padding-bottom:8px;">
           New Delivery Partnership Enquiry
@@ -101,11 +96,10 @@ app.post('/api/contact', async (req, res) => {
           <tr><td style="padding:8px 0;color:#666;"><b>Company</b></td><td>${company || 'Not provided'}</td></tr>
           <tr><td style="padding:8px 0;color:#666;"><b>Email</b></td><td><a href="mailto:${email}">${email}</a></td></tr>
         </table>
-        <p style="color:#666;margin-bottom:8px;"><b>Delivery Challenge:</b></p>
+        <p style="color:#666;margin-bottom:8px;"><b>Message:</b></p>
         <div style="background:#f7f9fc;border-left:4px solid #0EA5E9;padding:16px;border-radius:4px;line-height:1.7;">
-          ${cleanMessage}
+          ${message.replace(/\n/g, '<br>')}
         </div>
-        <p style="color:#999;font-size:12px;margin-top:24px;">Submitted via delivery-partnerships page</p>
       </div>
     ` : `
       <div style="font-family:Arial,sans-serif;max-width:600px;">
@@ -113,6 +107,7 @@ app.post('/api/contact', async (req, res) => {
         <p><b>Name:</b> ${name}</p>
         <p><b>Email:</b> ${email}</p>
         <p><b>Company:</b> ${company || 'N/A'}</p>
+        <p><b>Enquiry Type:</b> ${type}</p>
         <p><b>Message:</b><br>${message.replace(/\n/g, '<br>')}</p>
       </div>
     `;

@@ -582,59 +582,7 @@ gtag('config', 'G-QXB4ECJFTP');
 @media (max-width: 768px) {
   .dp-position-grid { grid-template-columns: 1fr; }
   .dp-inline-cta-inner { flex-direction: column; align-items: flex-start; }
-  .dp-partnerform-grid { grid-template-columns: 1fr; gap: 36px; }
-  .form-row-2 { grid-template-columns: 1fr; }
-  .dp-sticky-cta { bottom: 16px; right: 16px; }
-}
-
-/* Partnership contact form layout */
-.dp-partnerform-grid {
-  display: grid;
-  grid-template-columns: 1fr 1.45fr;
-  gap: 72px;
-  align-items: start;
-}
-.dp-form-points {
-  margin-top: 28px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.dp-form-points li {
-  font-size: 15px;
-  color: var(--text-mid);
-  padding-left: 22px;
-  position: relative;
-  line-height: 1.6;
-}
-.dp-form-points li::before {
-  content: '→';
-  position: absolute;
-  left: 0;
-  color: var(--accent);
-  font-size: 12px;
-  top: 2px;
-}
-.dp-form-note {
-  margin-top: 24px;
-  font-size: 13px;
-  color: var(--text-faint);
-  display: flex;
-  align-items: center;
-  gap: 7px;
-}
-.dp-form-note::before {
-  content: '';
-  display: inline-block;
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: var(--accent);
-  flex-shrink: 0;
-}
-.form-row-2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
+.dp-sticky-cta { bottom: 16px; right: 16px; }
 }
 
 /* Sticky CTA */
@@ -1655,56 +1603,6 @@ gtag('config', 'G-QXB4ECJFTP');
 </section>
 
 <!-- ══════════════════════════════════════════════════════════
-     PARTNERSHIP CONTACT FORM
-══════════════════════════════════════════════════════════ -->
-<section class="about-section" id="dp-partner-form" style="background:var(--bg-alt);">
-  <div class="container">
-    <div class="dp-partnerform-grid">
-
-      <div>
-        <p class="eyebrow">Start the Conversation</p>
-        <h2 class="section-h2">Tell us what you're working on</h2>
-        <p class="section-sub">No lengthy intake process. A focused message — and we'll respond with a direct conversation about whether there's a fit.</p>
-        <ul class="dp-form-points">
-          <li>What platform or system is involved</li>
-          <li>What you need delivered and by when</li>
-          <li>Whether white-label or joint delivery suits better</li>
-          <li>Any constraints, timelines, or sensitivities</li>
-        </ul>
-        <p class="dp-form-note">We respond to every enquiry within one business day.</p>
-      </div>
-
-      <div class="contact-form-wrap">
-        <p class="form-title">Partnership Enquiry</p>
-        <p class="form-sub">All enquiries are treated with strict confidentiality.</p>
-        <form id="partnerContactForm" novalidate>
-          <div class="form-row-2">
-            <div class="form-group">
-              <label class="form-label" for="partnerName">Your Name *</label>
-              <input class="form-input" type="text" id="partnerName" placeholder="James Whitfield" required>
-            </div>
-            <div class="form-group">
-              <label class="form-label" for="partnerCompany">Company / Firm *</label>
-              <input class="form-input" type="text" id="partnerCompany" placeholder="Whitfield Consulting Ltd" required>
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="partnerEmail">Work Email *</label>
-            <input class="form-input" type="email" id="partnerEmail" placeholder="james@yourfirm.com" required>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="partnerMessage">Describe Your Delivery Challenge *</label>
-            <textarea class="form-textarea" id="partnerMessage" rows="5" placeholder="e.g. We've just closed an ERPNext implementation and need custom workflow modules built. Client go-live is in 10 weeks. Looking for a white-label delivery partner." required></textarea>
-          </div>
-          <button type="submit" class="form-submit">Send Partnership Enquiry →</button>
-        </form>
-      </div>
-
-    </div>
-  </div>
-</section>
-
-<!-- ══════════════════════════════════════════════════════════
      FAQ
 ══════════════════════════════════════════════════════════ -->
 <section class="work-dark">
@@ -1862,7 +1760,7 @@ gtag('config', 'G-QXB4ECJFTP');
 
 <!-- Sticky CTA -->
 <div class="dp-sticky-cta" id="dpStickyCta">
-  <a href="#dp-partner-form" class="btn btn-accent btn-lg">Start a Partnership →</a>
+  <a href="/contact.html" class="btn btn-accent btn-lg">Start a Partnership →</a>
 </div>
 
 <script src="js/config.js"></script>
@@ -1923,7 +1821,6 @@ window.addEventListener('load', function() {
     '.dp-for-strip',
     '.dp-inline-cta-inner',
     '.dp-nda-split .about-img-wrap',
-    '.dp-partnerform-grid > div:first-child',
   ];
   singles.forEach(function(sel) {
     document.querySelectorAll(sel).forEach(function(el) {
@@ -1947,57 +1844,6 @@ window.addEventListener('load', function() {
   }, { passive: true });
 })();
 
-/* ── Partnership contact form ───────────────────────────── */
-(function() {
-  var form = document.getElementById('partnerContactForm');
-  if (!form) return;
-
-  form.addEventListener('submit', function(e) {
-    e.preventDefault();
-
-    var name    = document.getElementById('partnerName').value.trim();
-    var company = document.getElementById('partnerCompany').value.trim();
-    var email   = document.getElementById('partnerEmail').value.trim();
-    var message = document.getElementById('partnerMessage').value.trim();
-
-    if (!name || !email || !message) {
-      showMessage('error', 'Please fill in all required fields.');
-      return;
-    }
-
-    var btn  = form.querySelector('button[type="submit"]');
-    var orig = btn.textContent;
-    btn.disabled = true;
-    btn.textContent = 'Sending...';
-
-    fetch('/api/contact', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name:    name,
-        email:   email,
-        company: company,
-        message: '[Delivery Partnership Enquiry]\n\n' + message
-      })
-    })
-    .then(function(r) { return r.json(); })
-    .then(function(result) {
-      if (result.success) {
-        showMessage('success', 'Enquiry sent. We\'ll respond within one business day.');
-        form.reset();
-      } else {
-        showMessage('error', result.message || 'Something went wrong. Please email contact@aszurex.com directly.');
-      }
-    })
-    .catch(function() {
-      showMessage('error', 'Something went wrong. Please email contact@aszurex.com directly.');
-    })
-    .finally(function() {
-      btn.disabled = false;
-      btn.textContent = orig;
-    });
-  });
-})();
 </script>
 </body>
 </html>

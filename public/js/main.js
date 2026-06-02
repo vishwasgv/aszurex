@@ -68,11 +68,13 @@ function handleContactForm() {
     submitBtn.disabled = true;
     submitBtn.textContent = 'Sending...';
 
+    const enquiryTypeEl = document.getElementById('enquiryType');
     const formData = {
-      name:    document.getElementById('name').value,
-      email:   document.getElementById('email').value,
-      company: document.getElementById('company').value,
-      message: document.getElementById('message').value
+      name:        document.getElementById('name').value,
+      email:       document.getElementById('email').value,
+      company:     document.getElementById('company').value,
+      enquiryType: enquiryTypeEl ? enquiryTypeEl.value : 'General Enquiry',
+      message:     document.getElementById('message').value
     };
 
     try {
