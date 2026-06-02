@@ -141,6 +141,11 @@ app.post('/api/apply', upload.single('resume'), async (req, res) => {
   }
 });
 
+// ── Clean URL for delivery partnerships page ───────────────
+app.get('/delivery-partnerships', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'delivery-partnerships.html'));
+});
+
 // ── Start ──────────────────────────────────────────────────
 app.listen(PORT, () => {
   console.log('='.repeat(50));
