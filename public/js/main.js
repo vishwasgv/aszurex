@@ -69,11 +69,42 @@ function handleContactForm() {
     submitBtn.textContent = 'Sending...';
 
     const formData = {
-      name: document.getElementById('name').value,
-      email: document.getElementById('email').value,
+      name:    document.getElementById('name').value,
+      email:   document.getElementById('email').value,
       company: document.getElementById('company').value,
       message: document.getElementById('message').value
     };
+
+    function onDone(success) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalText;
+      if (success) {
+        showMessage('success', 'Thank you! Your message has been sent successfully.');
+        contactForm.reset();
+      } else {
+        showMessage('error', 'An error occurred. Please try again or email contact@aszurex.com directly.');
+      }
+    }
+
+    async function sendViaFormsubmit() {
+      try {
+        const r = await fetch('https://formsubmit.co/ajax/contact@aszurex.com', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify({
+            name:      formData.name,
+            email:     formData.email,
+            _subject:  'New Contact: ' + formData.name,
+            message:   'Company: ' + (formData.company || 'N/A') + '\n\nMessage:\n' + formData.message,
+            _template: 'table'
+          })
+        });
+        const res = await r.json();
+        onDone(res.success === true || res.success === 'true');
+      } catch {
+        onDone(false);
+      }
+    }
 
     try {
       const response = await fetch('/api/contact', {
@@ -82,17 +113,10 @@ function handleContactForm() {
         body: JSON.stringify(formData)
       });
       const result = await response.json();
-      if (result.success) {
-        showMessage('success', 'Thank you! Your message has been sent successfully.');
-        contactForm.reset();
-      } else {
-        showMessage('error', result.message || 'Failed to send message.');
-      }
+      if (result.success) { onDone(true); }
+      else { await sendViaFormsubmit(); }
     } catch {
-      showMessage('error', 'An error occurred. Please try again.');
-    } finally {
-      submitBtn.disabled = false;
-      submitBtn.textContent = originalText;
+      await sendViaFormsubmit();
     }
   });
 }
