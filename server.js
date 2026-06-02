@@ -24,7 +24,7 @@ if (!ZOHO_EMAIL || !ZOHO_PASSWORD || !TO_EMAIL) {
 // server idle periods which cause sendMail to silently fail.
 function createTransporter() {
   return nodemailer.createTransport({
-    host: 'smtp.zoho.com',
+    host: 'smtp.zoho.in',
     port: 465,
     secure: true,
     auth: {
