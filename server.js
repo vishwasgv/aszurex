@@ -25,9 +25,8 @@ if (!ZOHO_EMAIL || !ZOHO_PASSWORD || !TO_EMAIL) {
 function createTransporter() {
   return nodemailer.createTransport({
     host: 'smtp.zoho.com',
-    port: 587,
-    secure: false,
-    requireTLS: true,
+    port: 465,
+    secure: true,
     auth: {
       user: ZOHO_EMAIL,
       pass: ZOHO_PASSWORD
@@ -89,7 +88,7 @@ app.post('/api/contact', async (req, res) => {
       .replace(/\n/g, '<br>');
 
     const subject = isPartnership
-      ? `Partnership Enquiry: ${name} — ${company || 'No company'}`
+      ? `Partnership Enquiry: ${name} | ${company || 'No company'}`
       : `New Contact: ${name}`;
 
     const html = isPartnership ? `
@@ -177,6 +176,36 @@ app.post('/api/apply', upload.single('resume'), async (req, res) => {
     return res.status(500).json({ success: false, message: 'Failed to submit application.' });
   }
 });
+
+// ── SMTP diagnostics (temporary — remove after confirming email works) ──
+app.get('/api/test-smtp', async (req, res) => {
+  createTransporter().verify((error) => {
+    if (error) {
+      return res.json({
+        ok:      false,
+        error:   error.message,
+        code:    error.code    || null,
+        command: error.command || null,
+        hint:    getSmtpHint(error)
+      });
+    }
+    res.json({ ok: true, message: 'SMTP connection verified — credentials and port are correct.' });
+  });
+});
+
+function getSmtpHint(error) {
+  const msg = (error.message || '').toLowerCase();
+  const code = error.code || '';
+  if (code === 'EAUTH' || msg.includes('authentication'))
+    return 'Credentials wrong OR Zoho requires an app-specific password (check Mail > Settings > SMTP in your Zoho account).';
+  if (code === 'ECONNREFUSED' || msg.includes('connect'))
+    return 'Port 465 is blocked by your hosting provider. Try contacting support or use a different email service.';
+  if (msg.includes('self signed') || msg.includes('certificate'))
+    return 'TLS certificate issue — contact hosting provider.';
+  if (code === 'ETIMEDOUT' || msg.includes('timeout'))
+    return 'Connection timed out — port 465 may be blocked by your hosting provider.';
+  return 'Check server logs for full details.';
+}
 
 // ── Clean URL for delivery partnerships page ───────────────
 app.get('/delivery-partnerships', (req, res) => {
