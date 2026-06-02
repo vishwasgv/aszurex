@@ -703,10 +703,40 @@ gtag('config', 'G-QXB4ECJFTP');
   .dp-start-grid { grid-template-columns: 1fr; }
   .dp-faq-q-text { font-size: 15px; }
 }
+@media (max-width: 640px) {
+  /* Sticky CTA crowds small screens — inline CTAs cover the need */
+  .dp-sticky-cta { display: none; }
+}
 @media (max-width: 480px) {
   .dp-cap-grid { grid-template-columns: 1fr; }
   .dp-timeline { grid-template-columns: 1fr; gap: 20px; }
   .dp-hero-split { padding: 0; }
+
+  /* Reduce excessive card padding on small screens */
+  .dp-model-card   { padding: 28px 22px; }
+  .dp-model-title  { font-size: 19px; }
+  .dp-position-col { padding: 28px 22px; }
+  .dp-start-step   { padding: 28px 24px; }
+
+  /* Inline CTA buttons stack full-width */
+  .dp-inline-cta         { padding: 32px 0; }
+  .dp-inline-cta-title   { font-size: 17px; }
+  .dp-inline-cta-actions { flex-direction: column; width: 100%; }
+  .dp-inline-cta-actions .btn { width: 100%; justify-content: center; }
+
+  /* Scenario titles tighten on narrow screens */
+  .dp-scenario-title { font-size: 16px; }
+  .dp-scenario-item  { padding: 22px 0; }
+
+  /* FAQ question text compact */
+  .dp-faq-q-text { font-size: 14px; }
+
+  /* Value card content on 1-col full-width */
+  .dp-value-desc { font-size: 13px; }
+
+  /* For-strip compact */
+  .dp-for-strip { padding: 18px 0; }
+  .dp-for-tag   { font-size: 11px; padding: 4px 10px; }
 }
 </style>
 </head>
