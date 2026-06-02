@@ -31,9 +31,8 @@ function createTransporter() {
       user: ZOHO_EMAIL,
       pass: ZOHO_PASSWORD
     },
-    connectionTimeout: 15000,
-    greetingTimeout:   15000,
-    socketTimeout:     30000
+    connectionTimeout: 10000,
+    greetingTimeout:   10000
   });
 }
 
@@ -127,7 +126,8 @@ app.post('/api/contact', async (req, res) => {
     console.error('❌ Contact email error:', error.message, '| code:', error.code, '| response:', error.response);
     return res.status(500).json({
       success: false,
-      message: 'Failed to send message. Please email us directly at contact@aszurex.com'
+      message: 'Failed to send message. Please email us directly at contact@aszurex.com',
+      debug: { code: error.code || null, error: error.message || null }
     });
   }
 });
