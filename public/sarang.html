@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Sarang Business OS Lite — a free, fully offline business operating system by AszureX. Billing, inventory, CRM, reports, and an on-device AI assistant. No subscriptions, no cloud, no tracking. Free download for Windows.">
+<meta name="author" content="AszureX">
+<meta name="robots" content="index, follow">
+<meta property="og:title" content="Sarang Business OS Lite — Free Offline Business Software | AszureX">
+<meta property="og:description" content="Billing, inventory, CRM, reports, and an on-device AI assistant — completely free and fully offline. No subscriptions, no cloud dependency, no tracking. Built by AszureX.">
+<meta property="og:image" content="https://aszurex.com/icon-512.png">
+<meta property="og:url" content="https://aszurex.com/sarang.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="AszureX">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Sarang Business OS Lite — Free Offline Business Software | AszureX">
+<meta name="twitter:description" content="Billing, inventory, CRM, reports, and an on-device AI assistant — completely free and fully offline. No subscriptions, no cloud dependency, no tracking.">
+<meta name="twitter:image" content="https://aszurex.com/icon-512.png">
+<link rel="canonical" href="https://aszurex.com/sarang.html">
+<link rel="icon" href="/favicon.png" type="image/png" sizes="any">
+<link rel="icon" href="/aszurex-logo.png" type="image/png" sizes="512x512">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#06090F">
+<meta name="msapplication-TileImage" content="/aszurex-logo.png">
+<meta name="msapplication-TileColor" content="#06090F">
+<meta name="msapplication-config" content="none">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://aszurex.com/" },
+        { "@type": "ListItem", "position": 2, "name": "Sarang", "item": "https://aszurex.com/sarang.html" }
+      ]
+    },
+    {
+      "@type": "SoftwareApplication",
+      "name": "Sarang Business OS Lite",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "Windows 10/11 (64-bit)",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+      "softwareVersion": "1.0.0",
+      "creator": { "@type": "Organization", "name": "AszureX", "url": "https://aszurex.com" },
+      "description": "A free, fully offline business operating system with billing, inventory, CRM, reporting, and an on-device AI assistant. No subscriptions, no cloud dependency, no tracking."
+    }
+  ]
+}
+</script>
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-QXB4ECJFTP"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-QXB4ECJFTP');
+</script>
+
+<title>Sarang Business OS Lite — Free Offline Business Software | AszureX</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  /* ── Sarang page-specific additions (kept local to avoid touching shared site sections) ── */
+  .sarang-download-card {
+    display: flex; flex-direction: column; align-items: center; gap: 18px;
+    margin-top: 40px;
+  }
+  .sarang-download-meta {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 22px;
+    font-size: 14px; color: rgba(255,255,255,0.55);
+  }
+  .sarang-download-meta span { white-space: nowrap; }
+  .sarang-pill-row {
+    display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;
+    max-width: 900px; margin: 0 auto;
+  }
+  .sarang-pill {
+    padding: 8px 16px; border-radius: 100px;
+    background: var(--bg-alt); border: 1px solid var(--border);
+    font-size: 13px; font-weight: 600; color: var(--text-mid);
+  }
+  .sarang-feature-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+    margin-top: 40px;
+  }
+  .sarang-feature-card {
+    padding: 28px; border-radius: var(--radius-lg); background: var(--bg);
+    border: 1px solid var(--border);
+  }
+  .sarang-feature-icon {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: rgba(14,165,233,0.10); color: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 16px;
+  }
+  .sarang-feature-icon svg { width: 22px; height: 22px; }
+  .sarang-feature-title { font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+  .sarang-feature-desc { font-size: 14.5px; color: var(--text-mid); line-height: 1.65; }
+  .sarang-trust-block {
+    background: var(--bg-dark); border-radius: var(--radius-lg);
+    padding: 44px 40px; margin-top: 8px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px 40px;
+  }
+  .sarang-trust-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    font-size: 15px; color: rgba(255,255,255,0.82); padding: 10px 0;
+  }
+  .sarang-trust-item svg { width: 18px; height: 18px; flex-shrink: 0; margin-top: 2px; color: var(--accent-lt); }
+  .sarang-ai-callout {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center;
+  }
+  .sarang-shot-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+    margin-top: 40px;
+  }
+  .sarang-shot-frame {
+    border-radius: var(--radius-lg); overflow: hidden;
+    border: 1px solid var(--border);
+    box-shadow: 0 20px 50px rgba(15,23,42,0.10);
+    background: #fff;
+    line-height: 0;
+  }
+  .sarang-shot-frame img { width: 100%; height: auto; display: block; }
+  .sarang-biztype-grid {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 24px;
+    margin-top: 40px;
+  }
+  .sarang-biztype-group h3 {
+    font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--accent-lt); margin-bottom: 12px;
+  }
+  .sarang-biztype-group ul { list-style: none; padding: 0; margin: 0; }
+  .sarang-biztype-group li {
+    font-size: 14px; color: rgba(255,255,255,0.68); line-height: 1.9;
+    padding-left: 14px; position: relative;
+  }
+  .sarang-biztype-group li::before {
+    content: '—'; position: absolute; left: 0; color: rgba(255,255,255,0.28);
+  }
+  .sarang-lang-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+    margin-top: 40px; max-width: 760px;
+  }
+  .sarang-lang-group {
+    background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    padding: 28px 32px;
+  }
+  .sarang-lang-group h3 {
+    font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 16px;
+  }
+  .sarang-lang-group ul { list-style: none; padding: 0; margin: 0; }
+  .sarang-lang-group li {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-size: 15px; font-weight: 600; color: var(--text); padding: 9px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .sarang-lang-group li:last-child { border-bottom: none; }
+  .sarang-lang-native { font-weight: 400; color: var(--text-faint); font-size: 14px; }
+  .sarang-ai-tag {
+    display: inline-block; padding: 6px 14px; border-radius: 100px;
+    background: rgba(14,165,233,0.12); color: var(--accent-lt);
+    font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  @media (max-width: 900px) {
+    .sarang-feature-grid { grid-template-columns: 1fr 1fr; }
+    .sarang-trust-block { grid-template-columns: 1fr; padding: 32px 24px; }
+    .sarang-ai-callout { grid-template-columns: 1fr; gap: 28px; }
+    .sarang-shot-grid { grid-template-columns: 1fr; }
+    .sarang-biztype-grid { grid-template-columns: 1fr 1fr 1fr; }
+    .sarang-lang-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 560px) {
+    .sarang-feature-grid { grid-template-columns: 1fr; }
+    .sarang-biztype-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="navbar">
+  <div class="container">
+    <a href="/" class="logo" aria-label="AszureX Home">
+      <img src="/aszurex-logo.png" alt="AszureX" class="logo-icon-img">
+      <div class="logo-wordmark">
+        <span class="logo-text">AszureX</span>
+        <span class="logo-tagline">Trust Beyond Limits...</span>
+      </div>
+    </a>
+
+    <button class="hamburger" aria-label="Toggle menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+
+    <ul class="nav-menu">
+      <li><a href="/">Home</a></li>
+      <li><a href="/services.html">Services</a></li>
+      <li><a href="/about.html">About</a></li>
+      <li><a href="/careers.html">Careers</a></li>
+      <li><a href="/delivery-partnerships">Partners</a></li>
+      <li><a href="/sarang.html" class="active">Sarang</a></li>
+      <li><a href="/contact.html">Contact</a></li>
+      <li><a href="#download" class="btn btn-accent">Download Free →</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero-dark" id="sarang-hero">
+  <div class="container">
+    <div style="max-width:760px;margin:0 auto;text-align:center;">
+      <img src="/images/sarang/sarang-logo.png" alt="Sarang Business OS Lite logo" width="112" height="112" style="width:112px;height:112px;border-radius:26px;box-shadow:0 12px 40px rgba(14,165,233,0.35);margin-bottom:28px;">
+
+      <div class="hero-tag" style="margin:0 auto 20px;">Free · Offline · Yours</div>
+
+      <h1 class="hero-h1">
+        Sarang<br>
+        <span class="hi">Business OS Lite</span>
+      </h1>
+
+      <p class="hero-sub" style="margin:20px auto 0;">
+        A free, fully offline business operating system — billing, inventory, CRM,
+        reporting, and an on-device AI assistant. No subscriptions. No cloud dependency.
+        No tracking. Your data never leaves your computer.
+      </p>
+
+      <div class="sarang-download-card">
+        <a href="https://github.com/vishwasgv/Sarang/releases/latest/download/Sarang-Setup-latest.exe"
+           class="btn btn-accent btn-lg" download id="sarang-download-btn">
+          ⬇ Download Free for Windows
+        </a>
+        <div class="sarang-download-meta">
+          <span>Windows 10 / 11 · 64-bit</span>
+          <span>v1.0.0</span>
+          <span>~1.1 GB installer</span>
+          <span>No account required</span>
+        </div>
+      </div>
+
+      <p class="hero-trust">Powered by Aszurex &nbsp;&middot;&nbsp; Trust Beyond Limits</p>
+    </div>
+  </div>
+</section>
+
+<!-- Stats -->
+<section class="stats-section">
+  <div class="container">
+    <div class="stats-grid">
+      <div class="stat-item">
+        <div class="stat-num">43</div>
+        <div class="stat-label">Business types supported out of the box — from retail to clinics to professional services</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">13</div>
+        <div class="stat-label">Languages, including 8 Indian languages and Arabic RTL support</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">$0</div>
+        <div class="stat-label">Cost — no subscriptions, no recurring fees, no paywalls, ever</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-num">0</div>
+        <div class="stat-label">Data sent to the cloud — everything runs and stays on your device</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- What's inside -->
+<section class="services-ed">
+  <div class="container">
+    <div class="services-ed-top">
+      <div>
+        <p class="eyebrow">What's Inside</p>
+        <h2 class="section-h2">Everything a growing business needs to run day to day</h2>
+      </div>
+      <div class="services-ed-right">
+        <p class="section-sub" style="margin-top:0;">One installer, one local database, every core operation covered — no separate tools to stitch together.</p>
+      </div>
+    </div>
+
+    <div class="sarang-feature-grid">
+      <div class="sarang-feature-card">
+        <div class="sarang-feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v16"/></svg>
+        </div>
+        <div class="sarang-feature-title">Billing &amp; Invoicing</div>
+        <div class="sarang-feature-desc">Fast billing with barcode support, loose/weight-based items, and GST-ready invoices — including GSTR-1, HSN Summary, and GSTR-3B Preview reports.</div>
+      </div>
+      <div class="sarang-feature-card">
+        <div class="sarang-feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+        </div>
+        <div class="sarang-feature-title">Inventory Management</div>
+        <div class="sarang-feature-desc">Real-time stock tracking, supplier management, and stock adjustments — built for the way each of the 43 supported business types actually operates.</div>
+      </div>
+      <div class="sarang-feature-card">
+        <div class="sarang-feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <div class="sarang-feature-title">Customers &amp; Suppliers</div>
+        <div class="sarang-feature-desc">Track customer relationships, outstanding payments, credit limits, and supplier accounts in one place — no separate CRM needed.</div>
+      </div>
+      <div class="sarang-feature-card">
+        <div class="sarang-feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.1-3-3L3 17.6"/></svg>
+        </div>
+        <div class="sarang-feature-title">Reports &amp; Analytics</div>
+        <div class="sarang-feature-desc">Sales, inventory, and financial reports with a tax engine that covers GST as well as generalised tax and currency handling for use outside India.</div>
+      </div>
+      <div class="sarang-feature-card">
+        <div class="sarang-feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a4 4 0 0 1 4 4v3a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4z"/><path d="M6 11v1a6 6 0 0 0 12 0v-1M12 18v4M9 22h6"/></svg>
+        </div>
+        <div class="sarang-feature-title">Ask Your Business</div>
+        <div class="sarang-feature-desc">An on-device AI assistant that answers questions about your own sales, inventory, and customers — fully offline, nothing ever leaves your computer.</div>
+      </div>
+      <div class="sarang-feature-card">
+        <div class="sarang-feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-9-9c2.5 0 4.8 1 6.4 2.6"/><path d="M21 3v6h-6"/></svg>
+        </div>
+        <div class="sarang-feature-title">Backup &amp; Restore</div>
+        <div class="sarang-feature-desc">One-click local backups with integrity verification before every restore — your records stay safe and entirely under your control.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Screenshots -->
+<section class="services-ed" style="background:var(--bg-alt);">
+  <div class="container">
+    <div class="services-ed-top">
+      <div>
+        <p class="eyebrow">See It In Action</p>
+        <h2 class="section-h2">Real screens from the real app</h2>
+      </div>
+      <div class="services-ed-right">
+        <p class="section-sub" style="margin-top:0;">No mockups — this is what opens on your screen after you install it.</p>
+      </div>
+    </div>
+
+    <div class="sarang-shot-grid">
+      <div class="sarang-shot-frame">
+        <img src="/images/sarang/screenshot-dashboard.png" alt="Sarang dashboard with today's sales, outstanding, inventory, and profit KPI cards" loading="lazy" width="1440" height="660">
+      </div>
+      <div class="sarang-shot-frame">
+        <img src="/images/sarang/screenshot-billing.png" alt="Sarang new invoice / billing screen with product search and payment method selection" loading="lazy" width="1440" height="900">
+      </div>
+      <div class="sarang-shot-frame">
+        <img src="/images/sarang/screenshot-reports.png" alt="Sarang reports screen listing Sales, Inventory, Tax, Profit and Loss, and other reports" loading="lazy" width="1440" height="900">
+      </div>
+      <div class="sarang-shot-frame">
+        <img src="/images/sarang/screenshot-inventory.png" alt="Sarang inventory screen showing stock levels and reorder alerts" loading="lazy" width="1440" height="900">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Business types -->
+<section class="proof-strip">
+  <div class="container">
+    <div class="proof-strip-top">
+      <div>
+        <p class="eyebrow eyebrow-inv">Built For Your Business</p>
+        <h2 class="section-h2 inv" style="font-size:clamp(22px,2.8vw,34px);">All 43 business types, listed in full</h2>
+      </div>
+      <p style="font-size:15px;color:rgba(255,255,255,0.38);max-width:320px;text-align:right;line-height:1.6;">Pick your business type at setup and Sarang configures itself — the right fields, workflows, and reports, out of the box. Switch it later any time from Settings.</p>
+    </div>
+
+    <div class="sarang-biztype-grid">
+      <div class="sarang-biztype-group">
+        <h3>Retail &amp; Trade</h3>
+        <ul>
+          <li>Restaurant / Café / Food</li>
+          <li>Retail / General Store</li>
+          <li>Hardware / Glass / Plywood</li>
+          <li>Distributor / Wholesale</li>
+          <li>Pharmacy / Medical Store</li>
+          <li>Electronics / Mobile Store</li>
+          <li>Clothing / Textile / Apparel</li>
+          <li>Footwear / Shoe Store</li>
+          <li>Agricultural Inputs &amp; Equipment</li>
+          <li>Jewellery</li>
+          <li>Rental Business</li>
+          <li>Hotel / Lodge</li>
+          <li>Manufacturing / Production</li>
+          <li>General Business</li>
+        </ul>
+      </div>
+      <div class="sarang-biztype-group">
+        <h3>Clinical &amp; Healthcare</h3>
+        <ul>
+          <li>Veterinary Clinic</li>
+          <li>GP / General Physician</li>
+          <li>Specialist Clinic</li>
+          <li>Dental Clinic</li>
+          <li>Physiotherapy Clinic</li>
+          <li>Diagnostic &amp; Pathology Lab</li>
+          <li>Blood Bank</li>
+        </ul>
+        <h3 style="margin-top:20px;">Wellness</h3>
+        <ul>
+          <li>Beauty Salon / Spa</li>
+          <li>Gym / Fitness Studio</li>
+          <li>Driving School</li>
+        </ul>
+      </div>
+      <div class="sarang-biztype-group">
+        <h3>Professional Services</h3>
+        <ul>
+          <li>Lawyer / Law Firm</li>
+          <li>CA / Chartered Accountant</li>
+          <li>Company Secretary</li>
+          <li>Architect</li>
+          <li>Civil Engineer</li>
+          <li>Real Estate Agent</li>
+          <li>Consultant</li>
+          <li>Consultant / Freelancer</li>
+        </ul>
+      </div>
+      <div class="sarang-biztype-group">
+        <h3>Creative &amp; Agencies</h3>
+        <ul>
+          <li>Marketing Agency</li>
+          <li>Software / IT Agency</li>
+          <li>Photography Studio</li>
+          <li>Event Management</li>
+          <li>Service Business / Agency / IT</li>
+        </ul>
+        <h3 style="margin-top:20px;">Education</h3>
+        <ul>
+          <li>Coaching / Tuition Institute</li>
+        </ul>
+      </div>
+      <div class="sarang-biztype-group">
+        <h3>Trade &amp; Repair</h3>
+        <ul>
+          <li>Car Service Center</li>
+          <li>Tailor / Boutique</li>
+          <li>Pest Control Service</li>
+          <li>Placement / Recruitment Agency</li>
+          <li>Repair Shop / Service Centre</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Languages -->
+<section class="qual-section" style="background:var(--bg-alt);">
+  <div class="container">
+    <p class="eyebrow">Speak Your Customer's Language</p>
+    <h2 class="section-h2">13 languages, built in</h2>
+    <p class="section-sub">Switch languages any time from Settings — no reinstall, no separate download. (Some specialised service-vertical templates run English-only; every product/retail-category business gets the full set below.)</p>
+
+    <div class="sarang-lang-grid">
+      <div class="sarang-lang-group">
+        <h3>Indian Languages</h3>
+        <ul>
+          <li><span>English</span></li>
+          <li><span>Hindi</span><span class="sarang-lang-native">हिंदी</span></li>
+          <li><span>Marathi</span><span class="sarang-lang-native">मराठी</span></li>
+          <li><span>Gujarati</span><span class="sarang-lang-native">ગુજરાતી</span></li>
+          <li><span>Kannada</span><span class="sarang-lang-native">ಕನ್ನಡ</span></li>
+          <li><span>Tamil</span><span class="sarang-lang-native">தமிழ்</span></li>
+          <li><span>Telugu</span><span class="sarang-lang-native">తెలుగు</span></li>
+          <li><span>Malayalam</span><span class="sarang-lang-native">മലയാളം</span></li>
+        </ul>
+      </div>
+      <div class="sarang-lang-group">
+        <h3>International Languages</h3>
+        <ul>
+          <li><span>Spanish</span><span class="sarang-lang-native">Español</span></li>
+          <li><span>French</span><span class="sarang-lang-native">Français</span></li>
+          <li><span>Portuguese</span><span class="sarang-lang-native">Português</span></li>
+          <li><span>Indonesian</span><span class="sarang-lang-native">Bahasa Indonesia</span></li>
+          <li><span>Arabic</span><span class="sarang-lang-native">العربية · RTL</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- AI Assistant callout -->
+<section class="work-dark">
+  <div class="container">
+    <div class="sarang-ai-callout">
+      <div>
+        <span class="sarang-ai-tag">On-Device AI</span>
+        <h2 class="section-h2 inv" style="margin-bottom:16px;">"Ask Your Business."</h2>
+        <p style="color:rgba(255,255,255,0.65);font-size:16px;line-height:1.75;margin-bottom:16px;">
+          Sarang ships with a local AI model that runs entirely on your computer — no internet
+          required, ever. Ask it about today's sales, low stock, or outstanding payments in
+          plain language, and it answers from your real data using a fixed set of verified
+          queries. It never invents numbers, and it never sends your data anywhere.
+        </p>
+        <p style="color:rgba(255,255,255,0.4);font-size:14px;">Currently available in English. CPU-only — no dedicated graphics card required.</p>
+      </div>
+      <div class="sarang-shot-frame">
+        <img src="/images/sarang/screenshot-ai-assistant.png" alt="Sarang's Ask Your Business AI assistant screen" loading="lazy" width="900" height="562">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Trust / Transparency -->
+<section class="qual-section">
+  <div class="container">
+    <p class="eyebrow">Why Businesses Trust Sarang</p>
+    <h2 class="section-h2">Completely free. Completely transparent.</h2>
+    <p class="section-sub">This software is completely free — no subscriptions, no monthly fees, no cloud dependency, no user tracking, no telemetry by default, no data collection by default. Your data stays on your device. AszureX does not have access to your business data.</p>
+
+    <div class="sarang-trust-block">
+      <div class="sarang-trust-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+        No subscriptions or recurring fees — ever
+      </div>
+      <div class="sarang-trust-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+        Fully offline — no internet connection required to run
+      </div>
+      <div class="sarang-trust-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+        No telemetry or tracking by default
+      </div>
+      <div class="sarang-trust-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+        No forced ads, popups, or paywalled features
+      </div>
+      <div class="sarang-trust-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+        Local backup &amp; restore, verified before every restore
+      </div>
+      <div class="sarang-trust-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
+        Role-based access — Admin, Manager, Cashier, Staff, Kitchen Staff
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Download CTA -->
+<section class="services-cta" id="download">
+  <div class="container">
+    <div class="services-cta-box">
+      <p class="eyebrow eyebrow-inv">Get Started</p>
+      <h2 class="section-h2 inv" style="margin-bottom:16px;">Download Sarang — free, forever</h2>
+      <p class="section-sub inv" style="margin:0 auto 32px;">One installer. No sign-up. No trial period. Runs comfortably on modest hardware — 8GB RAM recommended for the AI Assistant.</p>
+      <div class="sarang-download-card" style="margin-top:0;">
+        <a href="https://github.com/vishwasgv/Sarang/releases/latest/download/Sarang-Setup-latest.exe"
+           class="btn btn-accent btn-lg" download>
+          ⬇ Download Free for Windows
+        </a>
+        <div class="sarang-download-meta">
+          <span>Windows 10 / 11 · 64-bit</span>
+          <span>v1.0.0</span>
+          <span>~1.1 GB installer</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Build something custom -->
+<section class="testimonials">
+  <div class="container">
+    <div class="testi-header">
+      <p class="eyebrow">Need Something Built Around Your Business?</p>
+      <h2 class="section-h2">Sarang is what AszureX builds for free — imagine what we build for you</h2>
+    </div>
+    <div style="text-align:center;margin-top:8px;">
+      <a href="/contact.html" class="btn btn-outline btn-lg">Talk to AszureX About Custom Software →</a>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-logo-row">
+          <img src="/aszurex-logo.png" alt="AszureX" class="footer-logo-img">
+          <div class="footer-brand-wrap">
+            <span class="footer-brand">AszureX</span>
+            <span class="footer-tagline">Trust Beyond Limits</span>
+          </div>
+        </div>
+        <p class="footer-desc">Building the software systems and support infrastructure that growing businesses need to operate with confidence — worldwide.</p>
+      </div>
+      <div>
+        <p class="footer-col-title">Navigation</p>
+        <ul class="footer-links">
+          <li><a href="/">Home</a></li>
+          <li><a href="/services.html">Services</a></li>
+          <li><a href="/about.html">About</a></li>
+          <li><a href="/careers.html">Careers</a></li>
+          <li><a href="/delivery-partnerships">Delivery Partners</a></li>
+          <li><a href="/sarang.html">Sarang</a></li>
+          <li><a href="/contact.html">Contact</a></li>
+        </ul>
+      </div>
+      <div>
+        <p class="footer-col-title">Sarang</p>
+        <ul class="footer-links">
+          <li><a href="#download">Download Free</a></li>
+          <li><a href="/sarang.html#sarang-hero">What's Inside</a></li>
+        </ul>
+      </div>
+      <div>
+        <p class="footer-col-title">Contact</p>
+        <ul class="footer-contact-list">
+          <li class="footer-contact-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+            </svg>
+            <a href="tel:+919845803993">+91 9845803993</a>
+          </li>
+          <li class="footer-contact-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+              <polyline points="22,6 12,13 2,6"/>
+            </svg>
+            <a href="https://mail.google.com/mail/?view=cm&to=contact@aszurex.com" target="_blank" rel="noopener noreferrer">contact@aszurex.com</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p class="footer-copy">&copy; 2026 AszureX. All rights reserved.</p>
+    </div>
+  </div>
+</footer>
+
+<script src="js/config.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
