@@ -122,6 +122,21 @@ gtag('config', 'G-QXB4ECJFTP');
     line-height: 0;
   }
   .sarang-shot-frame img { width: 100%; height: auto; display: block; }
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+  }
+  .sarang-hero-logo-wrap {
+    display: block; margin: 0 auto; max-width: 780px;
+  }
+  .sarang-hero-logo-full {
+    width: 100%; height: auto; display: block;
+    border-radius: 20px;
+    filter: drop-shadow(0 20px 60px rgba(59,130,246,0.30));
+  }
+  @media (max-width: 560px) {
+    .sarang-hero-logo-wrap { max-width: 100%; }
+  }
   .sarang-biztype-grid {
     display: grid; grid-template-columns: repeat(5, 1fr); gap: 24px;
     margin-top: 40px;
@@ -212,19 +227,20 @@ gtag('config', 'G-QXB4ECJFTP');
 <section class="hero-dark" id="sarang-hero">
   <div class="container">
     <div style="max-width:760px;margin:0 auto;text-align:center;">
-      <img src="/images/sarang/sarang-logo.png" alt="Sarang Business OS Lite logo" width="112" height="112" style="width:112px;height:112px;border-radius:26px;box-shadow:0 12px 40px rgba(14,165,233,0.35);margin-bottom:28px;">
+      <div class="hero-tag" style="margin:0 auto 24px;">Free · Offline · Yours</div>
 
-      <div class="hero-tag" style="margin:0 auto 20px;">Free · Offline · Yours</div>
-
-      <h1 class="hero-h1">
-        Sarang<br>
-        <span class="hi">Business OS Lite</span>
+      <h1 class="sarang-hero-logo-wrap">
+        <span class="sr-only">Sarang Business OS Lite — Your Business. Your Way.</span>
+        <picture>
+          <source srcset="/images/sarang/sarang-logo-full.webp" type="image/webp">
+          <img src="/images/sarang/sarang-logo-full.png" alt="" class="sarang-hero-logo-full" width="1400" height="933">
+        </picture>
       </h1>
 
-      <p class="hero-sub" style="margin:20px auto 0;">
-        A free, fully offline business operating system — billing, inventory, CRM,
-        reporting, and an on-device AI assistant. No subscriptions. No cloud dependency.
-        No tracking. Your data never leaves your computer.
+      <p class="hero-sub" style="margin:28px auto 0;">
+        Billing, inventory, CRM, reporting, and an on-device AI assistant — completely
+        free and fully offline. No subscriptions. No cloud dependency. No tracking.
+        Your data never leaves your computer.
       </p>
 
       <div class="sarang-download-card">
