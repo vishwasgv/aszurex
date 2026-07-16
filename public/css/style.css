@@ -3,7 +3,9 @@
    Font: Plus Jakarta Sans | Palette: White + Deep Navy + Azure
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+/* Font is loaded via <link rel="stylesheet"> in each page's <head>, not
+   @import here — @import blocks CSSOM construction on an extra round-trip
+   before any styles apply at all; a <link> tag lets it load in parallel. */
 
 /* ── Tokens ─────────────────────────────────────────────── */
 :root {
@@ -279,6 +281,30 @@ input, textarea, select { font-family: inherit; }
   width: 700px; height: 700px;
   background: radial-gradient(circle, rgba(14,165,233,0.10) 0%, transparent 65%);
   pointer-events: none;
+  animation: heroGlowDrift 22s ease-in-out infinite alternate;
+  will-change: transform;
+}
+.hero-dark .hero-glow-2 {
+  position: absolute;
+  bottom: -180px; left: -120px;
+  width: 560px; height: 560px;
+  background: radial-gradient(circle, rgba(109,79,166,0.09) 0%, transparent 68%);
+  pointer-events: none;
+  animation: heroGlowDrift2 26s ease-in-out infinite alternate;
+  will-change: transform;
+}
+@keyframes heroGlowDrift {
+  0%   { transform: translate(0, 0) scale(1); }
+  50%  { transform: translate(-50px, 40px) scale(1.1); }
+  100% { transform: translate(25px, -25px) scale(0.95); }
+}
+@keyframes heroGlowDrift2 {
+  0%   { transform: translate(0, 0) scale(1); }
+  50%  { transform: translate(40px, -35px) scale(1.12); }
+  100% { transform: translate(-20px, 20px) scale(0.94); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-dark::after, .hero-dark .hero-glow-2 { animation: none; }
 }
 
 .hero-inner {
@@ -1754,6 +1780,96 @@ input, textarea, select { font-family: inherit; }
   position: relative;
   z-index: 1;
   max-width: 720px;
+}
+
+/* ── Stock photography — consistent brand color-grade ──────────
+   Targets only hotlinked Unsplash photos (never our own screenshots,
+   logos, or founder photo) so every stock image reads as one deliberate
+   system instead of a grab-bag of random photography. */
+img[src*="images.unsplash.com"] {
+  filter: saturate(0.82) contrast(1.06) brightness(0.95);
+}
+
+/* ── Sarang Showcase (homepage) ──────────────────────── */
+.sarang-showcase {
+  background: var(--bg-dark);
+  padding: var(--section) 0;
+  position: relative;
+  overflow: hidden;
+}
+.sarang-showcase::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(14,165,233,0.05) 1px, transparent 1px);
+  background-size: 36px 36px;
+  pointer-events: none;
+}
+.sarang-showcase-glow {
+  position: absolute;
+  top: -220px; left: 50%;
+  transform: translateX(-50%);
+  width: 900px; height: 900px;
+  background: radial-gradient(circle, rgba(109,79,166,0.16) 0%, rgba(14,165,233,0.10) 45%, transparent 70%);
+  pointer-events: none;
+}
+.sarang-showcase-inner {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 56px;
+  align-items: center;
+}
+.sarang-showcase-text {
+  font-size: 16px;
+  line-height: 1.75;
+  color: rgba(255,255,255,0.62);
+  margin: 18px 0 28px;
+  max-width: 480px;
+}
+.sarang-showcase-stats {
+  display: flex;
+  gap: 32px;
+  margin-bottom: 32px;
+}
+.sarang-showcase-stats div { display: flex; flex-direction: column; }
+.sarang-showcase-stats strong { font-size: 28px; font-weight: 800; color: #fff; line-height: 1.1; }
+.sarang-showcase-stats span { font-size: 12.5px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+.sarang-showcase-actions { display: flex; gap: 14px; flex-wrap: wrap; }
+.sarang-showcase-visual {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.sarang-showcase-logo {
+  width: 100%;
+  max-width: 420px;
+  height: auto;
+  border-radius: 16px;
+  filter: drop-shadow(0 16px 40px rgba(59,130,246,0.28));
+  margin-bottom: -28px;
+  position: relative;
+  z-index: 2;
+}
+.sarang-showcase-shot {
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow: 0 30px 70px rgba(0,0,0,0.45);
+  line-height: 0;
+}
+.sarang-showcase-shot img { width: 100%; height: auto; display: block; }
+
+@media (max-width: 900px) {
+  .sarang-showcase-inner { grid-template-columns: 1fr; gap: 40px; }
+  .sarang-showcase-text { max-width: 100%; }
+}
+@media (max-width: 560px) {
+  .sarang-showcase-stats { gap: 22px; }
+  .sarang-showcase-stats strong { font-size: 22px; }
 }
 
 /* ── Scroll reveal animations ────────────────────────── */

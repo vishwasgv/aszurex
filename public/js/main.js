@@ -1,12 +1,23 @@
+// Each init runs independently — one throwing here must never take down the
+// rest of the page's interactivity (mobile menu, smooth scroll, and — most
+// importantly — the scroll-reveal that makes section content visible at all).
+function safeInit(name, fn) {
+  try {
+    fn();
+  } catch (err) {
+    console.error(`[init:${name}] failed:`, err);
+  }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
-  loadServicesPage();
-  handleContactForm();
-  initMobileMenu();
-  initNavScroll();
-  initSmoothScroll();
-  initScrollReveal();
-  handleCareerForm();
-  initPageScroll();
+  safeInit('loadServicesPage', loadServicesPage);
+  safeInit('handleContactForm', handleContactForm);
+  safeInit('initMobileMenu', initMobileMenu);
+  safeInit('initNavScroll', initNavScroll);
+  safeInit('initSmoothScroll', initSmoothScroll);
+  safeInit('initScrollReveal', initScrollReveal);
+  safeInit('handleCareerForm', handleCareerForm);
+  safeInit('initPageScroll', initPageScroll);
 });
 
 function initMobileMenu() {
@@ -191,12 +202,19 @@ function initSmoothScroll() {
 }
 
 function initScrollReveal() {
+  // Belt-and-suspenders: if IntersectionObserver isn't available at all, skip
+  // the hide/reveal choreography entirely rather than leave content invisible
+  // with no mechanism to ever show it.
+  if (typeof IntersectionObserver === 'undefined') return;
+
   const vh = window.innerHeight;
+  const revealed = new Set();
 
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
         entry.target.classList.add('is-visible');
+        revealed.add(entry.target);
         observer.unobserve(entry.target);
       }
     });
@@ -207,6 +225,16 @@ function initScrollReveal() {
       el.classList.add('reveal');
       if (delay > 0) el.style.transitionDelay = `${delay}s`;
       observer.observe(el);
+      // Safety net: if this element is somehow never reported as intersecting
+      // (a fast programmatic scroll, an unusual layout, a browser quirk), force
+      // it visible after 2.5s rather than leave it permanently blank — content
+      // must never depend entirely on one animation mechanism firing correctly.
+      setTimeout(() => {
+        if (!revealed.has(el)) {
+          el.classList.add('is-visible');
+          observer.unobserve(el);
+        }
+      }, 2500 + delay * 1000);
     }
   }
 
@@ -243,8 +271,8 @@ function initScrollReveal() {
 }
 
 function initPageScroll() {
-  const sequence = ['/', '/services.html', '/about.html', '/careers.html', '/delivery-partnerships', '/contact.html'];
-  const names    = ['Home', 'Services', 'About', 'Careers', 'Partners', 'Contact'];
+  const sequence = ['/', '/services.html', '/about.html', '/careers.html', '/delivery-partnerships', '/sarang.html', '/contact.html'];
+  const names    = ['Home', 'Services', 'About', 'Careers', 'Partners', 'Sarang', 'Contact'];
 
   const path = window.location.pathname;
   const idx  = sequence.findIndex(p =>
