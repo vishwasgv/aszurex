@@ -32,6 +32,13 @@ const SARANG_LICENSE_HMAC_SECRET = process.env.SARANG_LICENSE_HMAC_SECRET || 'DE
 // send) without this set; it just means submissions aren't also logged to
 // a durable, queryable list yet.
 const SARANG_LEAD_SHEET_WEBHOOK_URL = process.env.SARANG_LEAD_SHEET_WEBHOOK_URL || '';
+// Google Apps Script Web App URL for the separate, dedicated usage-metrics
+// sheet (aggregate anonymous daily active-usage tracking). Unlike the lead
+// sheet above, this one is NOT optional at the route level — the client
+// depends on a genuine success response to know it's safe to clear its
+// local queue, so if this isn't configured the route fails closed (503)
+// rather than pretending to have recorded something it didn't.
+const SARANG_USAGE_SHEET_WEBHOOK_URL = process.env.SARANG_USAGE_SHEET_WEBHOOK_URL || '';
 if (!process.env.SARANG_LICENSE_HMAC_SECRET) {
   console.error('❌ SARANG_LICENSE_HMAC_SECRET not set — using an insecure dev placeholder. Set this before going live.');
 }
@@ -301,6 +308,87 @@ app.post('/api/sarang-download', async (req, res) => {
   } catch (error) {
     console.error('❌ Sarang download error:', error.message, '| code:', error.code);
     return res.status(500).json({ success: false, message: 'Something went wrong. Please try again or email us at contact@aszurex.com' });
+  }
+});
+
+// ── Sarang: aggregate anonymous daily active-usage metrics ──
+// Separate rate limiter from the lead-capture one above — this route can
+// legitimately fire much more often per real install (every ~15min while
+// online, per the app's own throttle), so a higher ceiling is needed to
+// avoid rate-limiting real usage rather than abuse.
+const sarangUsageHits = new Map(); // ip -> [timestamps]
+const SARANG_USAGE_RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+const SARANG_USAGE_RATE_LIMIT_MAX = 30; // 30 requests/hour/IP
+function isUsageRateLimited(ip) {
+  const now = Date.now();
+  const hits = (sarangUsageHits.get(ip) || []).filter(t => now - t < SARANG_USAGE_RATE_LIMIT_WINDOW_MS);
+  hits.push(now);
+  sarangUsageHits.set(ip, hits);
+  return hits.length > SARANG_USAGE_RATE_LIMIT_MAX;
+}
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, hits] of sarangUsageHits.entries()) {
+    const fresh = hits.filter(t => now - t < SARANG_USAGE_RATE_LIMIT_WINDOW_MS);
+    if (fresh.length === 0) sarangUsageHits.delete(ip);
+    else sarangUsageHits.set(ip, fresh);
+  }
+}, 15 * 60 * 1000).unref();
+
+const SARANG_KEYHASH_RE = /^[a-f0-9]{64}$/;
+const SARANG_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const SARANG_USAGE_MAX_ENTRIES_PER_REQUEST = 200; // defensive cap, well above any real offline backlog
+
+app.post('/api/sarang-usage', async (req, res) => {
+  try {
+    const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown';
+    if (isUsageRateLimited(ip)) {
+      return res.status(429).json({ success: false, message: 'Too many requests.' });
+    }
+
+    if (!SARANG_USAGE_SHEET_WEBHOOK_URL) {
+      console.error('❌ Sarang usage-metrics received but SARANG_USAGE_SHEET_WEBHOOK_URL is not set — rejecting (fail closed, client will retry later).');
+      return res.status(503).json({ success: false, message: 'Usage metrics not configured.' });
+    }
+
+    const { keyHash, region, entries } = req.body;
+    if (!keyHash || !SARANG_KEYHASH_RE.test(keyHash)) {
+      return res.status(400).json({ success: false, message: 'Invalid key hash.' });
+    }
+    if (region !== 'IN' && region !== 'INTL') {
+      return res.status(400).json({ success: false, message: 'Invalid region.' });
+    }
+    if (!Array.isArray(entries) || entries.length === 0 || entries.length > SARANG_USAGE_MAX_ENTRIES_PER_REQUEST) {
+      return res.status(400).json({ success: false, message: 'Invalid entries.' });
+    }
+    for (const e of entries) {
+      const minutes = Number(e?.minutesUsed);
+      if (!e?.date || !SARANG_DATE_RE.test(e.date) || !Number.isFinite(minutes) || minutes < 0 || minutes > 1440) {
+        return res.status(400).json({ success: false, message: 'Invalid entry.' });
+      }
+    }
+
+    // Awaited, not fire-and-forget — the client only clears its local queue
+    // on a genuine 200 from this route, so this route must only return 200
+    // once the sheet write has actually succeeded. Unlike the lead-sheet
+    // webhook (best-effort, email is the real record), there is no other
+    // durable record of this data — the sheet write IS the source of truth.
+    const sheetRes = await fetch(SARANG_USAGE_SHEET_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ keyHash, region, entries }),
+      signal: AbortSignal.timeout(10000)
+    });
+
+    if (!sheetRes.ok) {
+      console.error('❌ Sarang usage-sheet webhook returned non-OK:', sheetRes.status);
+      return res.status(502).json({ success: false, message: 'Could not record usage right now.' });
+    }
+
+    return res.json({ success: true });
+  } catch (error) {
+    console.error('❌ Sarang usage-metrics error:', error.message);
+    return res.status(500).json({ success: false, message: 'Something went wrong.' });
   }
 });
 
