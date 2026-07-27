@@ -61,6 +61,7 @@
         <ul>
           <li><strong>Software update check</strong> — sends only the app's own version number, nothing else. Always toggleable in Settings → About.</li>
           <li><strong>License status check</strong> — at most once a day, and only when the device happens to be online, sends a one-way cryptographic hash of your license key (not the key itself, and mathematically not reversible back to it) so we can see that a license is still in active use. Never blocks the app from working if you're offline.</li>
+          <li><strong>Aggregate daily usage duration</strong> — each day the app is used, it records how many minutes it was open and, whenever the device is next online, sends that number together with the same one-way license-key hash above (no business data, nothing that identifies you or your business). This is disclosed once, during setup, and is not mentioned again during normal use. We use it only to see overall usage patterns across everyone — total hours, how often Sarang is opened, trends over a month or year — never to look at any single install's individual activity.</li>
         </ul>
 
         <h2 class="section-h2" style="text-align:left;font-size:1.4rem;">2. This website's download page — what we collect and why</h2>
