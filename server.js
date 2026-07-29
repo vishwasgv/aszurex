@@ -5,7 +5,7 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 const nodemailer = require('nodemailer');
-const { createHmac, timingSafeEqual } = require('crypto');
+const { createHmac, timingSafeEqual, randomBytes } = require('crypto');
 
 // ── Env-var check ─────────────────────────────────────────
 const ZOHO_EMAIL    = process.env.ZOHO_EMAIL;
@@ -208,12 +208,31 @@ app.post('/api/apply', upload.single('resume'), async (req, res) => {
 // generateLicenseKey()/parseAndVerifyLicenseKey() exactly — same format,
 // same HMAC-SHA256 algorithm — so a key issued here validates fully
 // offline in the app with no further server involvement.
+//
+// Real bug found+fixed 2026-07-29: the payload used to be built from only
+// tier+region+issuedDay, with zero per-request entropy — HMAC-SHA256 is
+// deterministic, so any two people issued a key for the same tier+region on
+// the same calendar day (this is the real-world case, not hypothetical, as
+// soon as more than one person signs up from the same region on the same
+// day) got the byte-for-byte IDENTICAL key string from this exact function.
+// Fixed by adding a random nonce as its own payload segment, keeping the
+// day-granularity date math the app's trial/renewal logic already depends
+// on completely unchanged. Every key already issued/emailed before this fix
+// used the old 5-part (no-nonce) format and keeps validating forever — see
+// the matching two-shape handling in the app's parseAndVerifyLicenseKey().
 function signPayload(payload) {
   return createHmac('sha256', SARANG_LICENSE_HMAC_SECRET).update(payload).digest('hex').slice(0, 12);
 }
 function generateSarangLicenseKey(tier, region, issuedAt) {
   const daysSinceEpoch = Math.floor(issuedAt.getTime() / 86_400_000);
-  const payload = `${tier}-${region}-${daysSinceEpoch.toString(36)}`;
+  // 6 random bytes (12 hex chars, 48 bits) — not a secret, just needs to be
+  // unique. Sized from actually measuring the birthday-bound collision rate
+  // at 3 bytes live during this fix: ~2.9% chance of any collision at just
+  // 1,000 same-day/tier/region signups, rising to ~95% by 10,000 — nowhere
+  // near negligible for a product meant to grow. Must match the app's
+  // license.service.ts nonce size exactly (both sides mirror each other).
+  const nonce = randomBytes(6).toString('hex');
+  const payload = `${tier}-${region}-${daysSinceEpoch.toString(36)}-${nonce}`;
   return `SARANG-${payload}-${signPayload(payload)}`;
 }
 
