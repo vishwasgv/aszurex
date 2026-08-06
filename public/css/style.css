@@ -16,7 +16,10 @@
   --text:      #0D1321;
   --text-mid:  #4A5568;
   --text-faint:#94A3B8;
+  --text-faint2:#64748B;
   --text-inv:  #FFFFFF;
+  --card-dark: #0F172A;
+  --danger:    #F87171;
   --accent:    #0EA5E9;
   --accent-h:  #0284C7;
   --accent-lt: #38BDF8;
@@ -364,7 +367,7 @@ input, textarea, select { font-family: inherit; }
   padding-top: 28px;
   border-top: 1px solid rgba(255,255,255,0.07);
   font-size: 13px;
-  color: rgba(255,255,255,0.30);
+  color: rgba(255,255,255,0.45);
   letter-spacing: 0.04em;
 }
 
@@ -871,7 +874,7 @@ input, textarea, select { font-family: inherit; }
   align-items: center;
   justify-content: space-between;
 }
-.footer-copy { font-size: 13px; color: rgba(255,255,255,0.20); }
+.footer-copy { font-size: 13px; color: rgba(255,255,255,0.45); }
 
 /* ── Page Header (inner pages) ───────────────────────────── */
 .page-header {
