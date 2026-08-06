@@ -96,6 +96,7 @@ input, textarea, select { font-family: inherit; }
 .btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   font-family: inherit;
   font-size: 15px;
