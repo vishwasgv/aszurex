@@ -285,6 +285,32 @@ function signSarangKillSwitchToken(suspended, issuedAt = new Date()) {
   return `SARANG-${payload}-${signPayload(payload)}`;
 }
 
+// ── Sarang: per-key revocation token (2026-09-02) ──
+// Mirrors sarang-business-os/src/main/services/license.service.ts's
+// signRevocationToken()/parseAndVerifyRevocationToken() exactly. The key's
+// own hash is embedded in the signed payload so a token can never be
+// replayed onto a different key. Only ever issued for a keyHash present in
+// SARANG_REVOKED_KEY_HASHES (a founder-edited, comma-separated env var —
+// same "flip in Render, no code deploy" operational pattern as the kill
+// switch above).
+function signSarangRevocationToken(keyHash) {
+  const payload = `REVOKE-${keyHash.toLowerCase()}`;
+  return `SARANG-${payload}-${signPayload(payload)}`;
+}
+// SARANG_REVOKED_KEY_HASHES — the actual answer to "one key can serve
+// unlimited devices forever": spot a key on an unusual number of distinct
+// devices (via the device-activation Sheet's "Flagged for Review" tab, which
+// only flags genuinely concurrent multi-device use, never a legitimate
+// sequential device replacement), paste its Key Hash into this
+// comma-separated env var, and every device sharing it finds out on its next
+// daily ping and drops to expired (non-destructive, same as any normal
+// expiry — never a data lock). Read fresh per request, same "flip in Render,
+// no code deploy" pattern as the kill switch above. Always a manual,
+// founder-reviewed decision — never automatic.
+function getSarangRevokedKeyHashes() {
+  return (process.env.SARANG_REVOKED_KEY_HASHES || '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+}
+
 // ── Sarang: very small in-memory per-IP rate limiter (Phase 59.1) ──
 // Same shape as sarang-business-os's qr-order-server.ts per-IP limiter —
 // this isn't a high-value target, just enough to stop casual form-flooding.
@@ -492,13 +518,15 @@ app.post('/api/sarang-heartbeat', (req, res) => {
   if (isHeartbeatRateLimited(ip)) {
     return res.status(429).json({ success: false, message: 'Too many requests.' });
   }
-  // keyHash/fingerprintHash are not used to change this response — the kill
-  // switch is a global flag today, not per-customer. They're only logged
-  // (best-effort, below) for manual device-count review; respond first so
-  // that logging can never delay or block the actual enforcement token.
-  res.json({ success: true, enforcementToken: signSarangKillSwitchToken(SARANG_ENFORCEMENT_SUSPENDED()) });
-
+  // fingerprintHash doesn't change this response, only the Sheet log below.
+  // keyHash IS checked against SARANG_REVOKED_KEY_HASHES — a manual,
+  // founder-edited list, never automatic — see the env var's own comment.
   const { keyHash, fingerprintHash } = req.body || {};
+  const responseBody = { success: true, enforcementToken: signSarangKillSwitchToken(SARANG_ENFORCEMENT_SUSPENDED()) };
+  if (keyHash && getSarangRevokedKeyHashes().includes(keyHash.toLowerCase())) {
+    responseBody.revocationToken = signSarangRevocationToken(keyHash);
+  }
+  res.json(responseBody);
   if (SARANG_DEVICE_SHEET_WEBHOOK_URL && keyHash && fingerprintHash) {
     fetch(SARANG_DEVICE_SHEET_WEBHOOK_URL, {
       method: 'POST',
