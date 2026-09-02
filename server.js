@@ -320,8 +320,8 @@ app.post('/api/sarang-download', async (req, res) => {
       return res.json({ success: true, downloadUrl: SARANG_DOWNLOAD_URL });
     }
 
-    const { name, email, phone, country, businessType } = req.body;
-    if (!name || !email || !phone || !country) {
+    const { name, email, phone, country, businessName, businessType, state, city } = req.body;
+    if (!name || !email || !phone || !country || !businessName || !businessType) {
       return res.status(400).json({ success: false, message: 'Please fill in all required fields.' });
     }
     if (!SARANG_EMAIL_RE.test(email)) {
@@ -331,7 +331,7 @@ app.post('/api/sarang-download', async (req, res) => {
     // Region determination (Phase 59.12) — same loose match Sarang's own
     // print.service.ts canShowUpiQr() already uses for this free-text field.
     const region = /^in$/i.test(country.trim()) || /india/i.test(country) ? 'IN' : 'INTL';
-    const priceLine = region === 'IN' ? '₹599/year (less than ₹50/month)' : '$29/year';
+    const priceLine = region === 'IN' ? '₹6,999/year (less than ₹600/month)' : '$149/year';
 
     const issuedAt = new Date();
     const licenseKey = generateSarangLicenseKey('TRIAL', region, issuedAt);
@@ -342,7 +342,7 @@ app.post('/api/sarang-download', async (req, res) => {
       fetch(SARANG_LEAD_SHEET_WEBHOOK_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, phone, country, businessType: businessType || '', region, licenseKey, issuedAt: issuedAt.toISOString() })
+        body: JSON.stringify({ name, email, phone, country, state: state || '', city: city || '', businessName: businessName || '', businessType: businessType || '', region, licenseKey, issuedAt: issuedAt.toISOString() })
       }).catch(err => console.error('⚠️  Sarang lead-sheet webhook failed (non-blocking):', err.message));
     }
 
@@ -354,7 +354,7 @@ app.post('/api/sarang-download', async (req, res) => {
       html: `
         <div style="font-family:Arial,sans-serif;max-width:600px;">
           <h2 style="color:#0EA5E9;">Thanks for trying Sarang</h2>
-          <p>Your download link and license key are below. Sarang is free to use for your first 12 months — after that, ${priceLine} keeps it running (you'll get a reminder inside the app well before it applies).</p>
+          <p>Your download link and license key are below. Sarang is free to use for your first 100 days — after that, ${priceLine} keeps it running (you'll get a reminder inside the app well before it applies). License payments are non-refundable.</p>
           <p><a href="${SARANG_DOWNLOAD_URL}" style="display:inline-block;background:#0EA5E9;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:600;">Download Sarang for Windows</a></p>
           <p><b>Your license key</b> (enter this during setup):</p>
           <p style="font-family:monospace;font-size:16px;background:#f7f9fc;border-left:4px solid #0EA5E9;padding:12px 16px;border-radius:4px;">${licenseKey}</p>
