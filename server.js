@@ -5,7 +5,7 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 const nodemailer = require('nodemailer');
-const { createHmac, timingSafeEqual, randomBytes } = require('crypto');
+const { createHmac, timingSafeEqual, randomBytes, sign: cryptoSign } = require('crypto');
 
 // ── Env-var check ─────────────────────────────────────────
 const ZOHO_EMAIL    = process.env.ZOHO_EMAIL;
@@ -48,6 +48,23 @@ if (!process.env.SARANG_LICENSE_HMAC_SECRET) {
 // open — see the checks inside each handler).
 const RAZORPAY_WEBHOOK_SECRET = process.env.RAZORPAY_WEBHOOK_SECRET || '';
 const LEMON_SQUEEZY_WEBHOOK_SECRET = process.env.LEMON_SQUEEZY_WEBHOOK_SECRET || '';
+// 2026-09-02 — Ed25519 private key for SARANG2 keys, base64-wrapped PKCS8 PEM
+// (avoids Render env-UI newline mangling). Never the same value as anything
+// shipped client-side. Decoded once at startup.
+const SARANG_LICENSE_ED25519_PRIVATE_KEY = process.env.SARANG_LICENSE_ED25519_PRIVATE_KEY_B64
+  ? Buffer.from(process.env.SARANG_LICENSE_ED25519_PRIVATE_KEY_B64, 'base64').toString('utf8')
+  : '';
+if (!SARANG_LICENSE_ED25519_PRIVATE_KEY) {
+  console.error('❌ SARANG_LICENSE_ED25519_PRIVATE_KEY_B64 not set — SARANG2 key issuance will fail until this is set.');
+}
+// 2026-09-02 hardening — remote kill switch (59.6). A single GLOBAL flag,
+// not per-customer: the founder flips this in the Render dashboard (env var
+// + restart, no code deploy) if the app's own day-335/365 expiry math ever
+// ships a bug, to relax enforcement across every install until a fixed app
+// version rolls out. Read fresh on every /api/sarang-heartbeat request, not
+// cached, so a flip takes effect on the very next ping any install makes —
+// no restart-the-server-twice gotcha.
+const SARANG_ENFORCEMENT_SUSPENDED = () => process.env.SARANG_ENFORCEMENT_SUSPENDED === 'true';
 
 // ── Nodemailer transporter factory ────────────────────────────
 // Fresh transporter per send — avoids stale TCP connections after
@@ -236,6 +253,31 @@ function generateSarangLicenseKey(tier, region, issuedAt) {
   return `SARANG-${payload}-${signPayload(payload)}`;
 }
 
+// ── Sarang: SARANG2 (Ed25519) key issuance, 2026-09-02 ──
+// Mirrors sarang-business-os/src/main/services/license.service.ts's
+// generateLicenseKeyV2() exactly.
+function generateSarangLicenseKeyV2(tier, region, issuedAt) {
+  const daysSinceEpoch = Math.floor(issuedAt.getTime() / 86_400_000);
+  const nonce = randomBytes(6).toString('hex');
+  const payload = `${tier}-${region}-${daysSinceEpoch.toString(36)}-${nonce}`;
+  const sigHex = cryptoSign(null, Buffer.from(payload), SARANG_LICENSE_ED25519_PRIVATE_KEY).toString('hex');
+  return `SARANG2-${payload}-${sigHex}`;
+}
+
+// ── Sarang: remote kill-switch token (Phase 59.6, hardened 2026-09-02) ──
+// Mirrors sarang-business-os/src/main/services/license.service.ts's
+// signKillSwitchToken()/parseAndVerifyKillSwitchToken() exactly — same
+// format, same HMAC-SHA256 algorithm as the (legacy) license-key signer
+// above, reusing signPayload(). The app used to trust a bare unsigned
+// 'true'/'false' string for this flag with zero cryptographic check (a real
+// hole, closed here and on the app side together) — now it's a signed
+// token in the same shape as a license key, verified the same way.
+function signSarangKillSwitchToken(suspended, issuedAt = new Date()) {
+  const daysSinceEpoch = Math.floor(issuedAt.getTime() / 86_400_000);
+  const payload = `KILLSWITCH-${suspended ? 1 : 0}-${daysSinceEpoch.toString(36)}`;
+  return `SARANG-${payload}-${signPayload(payload)}`;
+}
+
 // ── Sarang: very small in-memory per-IP rate limiter (Phase 59.1) ──
 // Same shape as sarang-business-os's qr-order-server.ts per-IP limiter —
 // this isn't a high-value target, just enough to stop casual form-flooding.
@@ -409,6 +451,45 @@ app.post('/api/sarang-usage', async (req, res) => {
     console.error('❌ Sarang usage-metrics error:', error.message);
     return res.status(500).json({ success: false, message: 'Something went wrong.' });
   }
+});
+
+// ── Sarang: license-status heartbeat / remote kill switch (59.6, hardened 2026-09-02) ──
+// This is what license.service.ts's pingLicenseStatusIfDue() actually POSTs
+// to — the route genuinely did not exist before this fix (every ping
+// silently 404'd and was swallowed by the app's own catch{}, so the kill
+// switch had never been exercised for real). Same rate-limiter shape as the
+// usage-metrics route above (this can legitimately fire ~once/day per real
+// install). No per-customer auth needed: the response carries no customer
+// data, is a single global founder-controlled flag, and is itself
+// signature-verified by the app — an unauthenticated but rate-limited GET
+// of "is enforcement currently suspended" reveals nothing sensitive.
+const sarangHeartbeatHits = new Map(); // ip -> [timestamps]
+function isHeartbeatRateLimited(ip) {
+  const now = Date.now();
+  const hits = (sarangHeartbeatHits.get(ip) || []).filter(t => now - t < SARANG_USAGE_RATE_LIMIT_WINDOW_MS);
+  hits.push(now);
+  sarangHeartbeatHits.set(ip, hits);
+  return hits.length > SARANG_USAGE_RATE_LIMIT_MAX;
+}
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, hits] of sarangHeartbeatHits.entries()) {
+    const fresh = hits.filter(t => now - t < SARANG_USAGE_RATE_LIMIT_WINDOW_MS);
+    if (fresh.length === 0) sarangHeartbeatHits.delete(ip);
+    else sarangHeartbeatHits.set(ip, fresh);
+  }
+}, 15 * 60 * 1000).unref();
+
+app.post('/api/sarang-heartbeat', (req, res) => {
+  const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown';
+  if (isHeartbeatRateLimited(ip)) {
+    return res.status(429).json({ success: false, message: 'Too many requests.' });
+  }
+  // keyHash is accepted but deliberately not validated/used yet — the kill
+  // switch is a global flag today, not per-customer. Kept on the request
+  // shape for future per-customer moderation and basic usage visibility
+  // without a breaking change to the app-side caller.
+  return res.json({ success: true, enforcementToken: signSarangKillSwitchToken(SARANG_ENFORCEMENT_SUSPENDED()) });
 });
 
 // ── Shared: issue a PAID license key and email it (59.9/59.12) ──
