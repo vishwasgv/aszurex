@@ -39,6 +39,13 @@ const SARANG_LEAD_SHEET_WEBHOOK_URL = process.env.SARANG_LEAD_SHEET_WEBHOOK_URL 
 // local queue, so if this isn't configured the route fails closed (503)
 // rather than pretending to have recorded something it didn't.
 const SARANG_USAGE_SHEET_WEBHOOK_URL = process.env.SARANG_USAGE_SHEET_WEBHOOK_URL || '';
+// Google Apps Script Web App URL for the device-activation visibility sheet
+// (2026-09-02) — logs {keyHash, fingerprintHash} on every heartbeat so a
+// key activated on an unusual number of distinct devices is visible for
+// manual review. Optional, same "still works without it" reasoning as the
+// lead sheet above: the heartbeat's real job (returning the kill-switch
+// token) must never be delayed or blocked by this logging.
+const SARANG_DEVICE_SHEET_WEBHOOK_URL = process.env.SARANG_DEVICE_SHEET_WEBHOOK_URL || '';
 if (!process.env.SARANG_LICENSE_HMAC_SECRET) {
   console.error('❌ SARANG_LICENSE_HMAC_SECRET not set — using an insecure dev placeholder. Set this before going live.');
 }
@@ -485,11 +492,20 @@ app.post('/api/sarang-heartbeat', (req, res) => {
   if (isHeartbeatRateLimited(ip)) {
     return res.status(429).json({ success: false, message: 'Too many requests.' });
   }
-  // keyHash is accepted but deliberately not validated/used yet — the kill
-  // switch is a global flag today, not per-customer. Kept on the request
-  // shape for future per-customer moderation and basic usage visibility
-  // without a breaking change to the app-side caller.
-  return res.json({ success: true, enforcementToken: signSarangKillSwitchToken(SARANG_ENFORCEMENT_SUSPENDED()) });
+  // keyHash/fingerprintHash are not used to change this response — the kill
+  // switch is a global flag today, not per-customer. They're only logged
+  // (best-effort, below) for manual device-count review; respond first so
+  // that logging can never delay or block the actual enforcement token.
+  res.json({ success: true, enforcementToken: signSarangKillSwitchToken(SARANG_ENFORCEMENT_SUSPENDED()) });
+
+  const { keyHash, fingerprintHash } = req.body || {};
+  if (SARANG_DEVICE_SHEET_WEBHOOK_URL && keyHash && fingerprintHash) {
+    fetch(SARANG_DEVICE_SHEET_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ keyHash, fingerprintHash, seenAt: new Date().toISOString() })
+    }).catch(err => console.error('⚠️  Sarang device-activation sheet webhook failed (non-blocking):', err.message));
+  }
 });
 
 // ── Shared: issue a PAID license key and email it (59.9/59.12) ──
