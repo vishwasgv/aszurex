@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', function() {
   safeInit('initSmoothScroll', initSmoothScroll);
   safeInit('initScrollReveal', initScrollReveal);
   safeInit('handleCareerForm', handleCareerForm);
+  safeInit('handleSarangSuggestionForm', handleSarangSuggestionForm);
   safeInit('initPageScroll', initPageScroll);
 });
 
@@ -139,6 +140,44 @@ function handleCareerForm() {
         careerForm.reset();
       } else {
         showMessage('error', result.message || 'Failed to submit application.');
+      }
+    } catch {
+      showMessage('error', 'An error occurred. Please try again.');
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalText;
+    }
+  });
+}
+
+function handleSarangSuggestionForm() {
+  const form = document.getElementById('sarangSuggestionForm');
+  if (!form) return;
+
+  form.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Sending...';
+
+    const formData = {
+      message: document.getElementById('sarangSuggestionMessage').value,
+      email: document.getElementById('sarangSuggestionEmail').value
+    };
+
+    try {
+      const response = await fetch('/api/sarang-suggestion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+      const result = await response.json();
+      if (result.success) {
+        showMessage('success', 'Thank you — your suggestion has been sent.');
+        form.reset();
+      } else {
+        showMessage('error', result.message || 'Failed to send your suggestion.');
       }
     } catch {
       showMessage('error', 'An error occurred. Please try again.');

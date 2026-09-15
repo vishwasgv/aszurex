@@ -46,6 +46,11 @@ const SARANG_USAGE_SHEET_WEBHOOK_URL = process.env.SARANG_USAGE_SHEET_WEBHOOK_UR
 // lead sheet above: the heartbeat's real job (returning the kill-switch
 // token) must never be delayed or blocked by this logging.
 const SARANG_DEVICE_SHEET_WEBHOOK_URL = process.env.SARANG_DEVICE_SHEET_WEBHOOK_URL || '';
+// Google Apps Script Web App URL for the Sarang suggestion-box sheet
+// (2026-09-15) — same "still works without it" reasoning as the lead sheet
+// above: the suggestion email still sends regardless, this just also logs
+// submissions to a durable, queryable list.
+const SARANG_SUGGESTION_SHEET_WEBHOOK_URL = process.env.SARANG_SUGGESTION_SHEET_WEBHOOK_URL || '';
 if (!process.env.SARANG_LICENSE_HMAC_SECRET) {
   console.error('❌ SARANG_LICENSE_HMAC_SECRET not set — using an insecure dev placeholder. Set this before going live.');
 }
@@ -483,6 +488,87 @@ app.post('/api/sarang-usage', async (req, res) => {
   } catch (error) {
     console.error('❌ Sarang usage-metrics error:', error.message);
     return res.status(500).json({ success: false, message: 'Something went wrong.' });
+  }
+});
+
+// ── Sarang: suggestion box (2026-09-15) ──
+// Founder's own framing: "we are definitely not 100% perfect product, your
+// message would bring one step closer to it" — a low-friction, honest
+// feedback channel on the Sarang product page itself, not buried in the
+// general company contact form. Unauthenticated and public, so rate-limited
+// per IP; message-only submissions are common for this kind of box, so
+// email is optional and not required the way it is on the main contact
+// form.
+const sarangSuggestionHits = new Map(); // ip -> [timestamps]
+const SARANG_SUGGESTION_RATE_LIMIT_MAX = 5; // 5 requests/hour/IP — a real user submits this once, not repeatedly
+function isSuggestionRateLimited(ip) {
+  const now = Date.now();
+  const hits = (sarangSuggestionHits.get(ip) || []).filter(t => now - t < SARANG_USAGE_RATE_LIMIT_WINDOW_MS);
+  hits.push(now);
+  sarangSuggestionHits.set(ip, hits);
+  return hits.length > SARANG_SUGGESTION_RATE_LIMIT_MAX;
+}
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, hits] of sarangSuggestionHits.entries()) {
+    const fresh = hits.filter(t => now - t < SARANG_USAGE_RATE_LIMIT_WINDOW_MS);
+    if (fresh.length === 0) sarangSuggestionHits.delete(ip);
+    else sarangSuggestionHits.set(ip, fresh);
+  }
+}, 15 * 60 * 1000).unref();
+
+const SARANG_SUGGESTION_MAX_LENGTH = 4000; // generous but bounded — defends against abuse, not real feedback
+
+app.post('/api/sarang-suggestion', async (req, res) => {
+  try {
+    const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown';
+    if (isSuggestionRateLimited(ip)) {
+      return res.status(429).json({ success: false, message: 'Too many requests.' });
+    }
+
+    const message = (req.body?.message || '').trim();
+    const email = (req.body?.email || '').trim();
+    if (!message) {
+      return res.status(400).json({ success: false, message: 'Please enter a message.' });
+    }
+    if (message.length > SARANG_SUGGESTION_MAX_LENGTH) {
+      return res.status(400).json({ success: false, message: 'Message is too long.' });
+    }
+
+    const submittedAt = new Date().toISOString();
+
+    // Email is the real record (like the lead-capture flow) — awaited, so a
+    // genuine failure is reported to the submitter rather than silently
+    // swallowed.
+    await createTransporter().sendMail({
+      from: `"AszureX" <${ZOHO_EMAIL}>`,
+      to: TO_EMAIL,
+      replyTo: email || undefined,
+      subject: 'New Sarang suggestion',
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:600px;">
+          <h3 style="color:#0D1321;">New Sarang Suggestion</h3>
+          ${email ? `<p><b>From:</b> ${email}</p>` : '<p><b>From:</b> (not provided)</p>'}
+          <p><b>Message:</b><br>${message.replace(/\n/g, '<br>')}</p>
+        </div>
+      `
+    });
+
+    // Best-effort sheet log — same "still works without it" reasoning as the
+    // lead-sheet webhook, never allowed to block or fail this response.
+    if (SARANG_SUGGESTION_SHEET_WEBHOOK_URL) {
+      fetch(SARANG_SUGGESTION_SHEET_WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message, email: email || null, submittedAt })
+      }).catch(err => console.error('⚠️  Sarang suggestion-sheet webhook failed (non-blocking):', err.message));
+    }
+
+    console.log(`✅ Sarang suggestion received${email ? ` — from: ${email}` : ''}`);
+    return res.json({ success: true, message: 'Thank you — your suggestion has been sent.' });
+  } catch (error) {
+    console.error('❌ Sarang suggestion error:', error.message);
+    return res.status(500).json({ success: false, message: 'Could not send your suggestion. Please try again.' });
   }
 });
 
