@@ -372,7 +372,7 @@ app.post('/api/sarang-download', async (req, res) => {
     const priceLine = region === 'IN' ? '₹6,999/year (less than ₹600/month)' : '$149/year';
 
     const issuedAt = new Date();
-    const licenseKey = generateSarangLicenseKey('TRIAL', region, issuedAt);
+    const licenseKey = generateSarangLicenseKeyV2('TRIAL', region, issuedAt);
 
     // Durable lead storage — best-effort, never blocks key delivery if the
     // Sheet webhook is slow/misconfigured/not yet set up.
@@ -625,7 +625,7 @@ app.post('/api/sarang-heartbeat', (req, res) => {
 // ── Shared: issue a PAID license key and email it (59.9/59.12) ──
 async function issueRenewalKey({ email, region }) {
   const issuedAt = new Date();
-  const licenseKey = generateSarangLicenseKey('PAID', region, issuedAt);
+  const licenseKey = generateSarangLicenseKeyV2('PAID', region, issuedAt);
   await createTransporter().sendMail({
     from: `"AszureX" <${ZOHO_EMAIL}>`,
     to: email,
