@@ -45,6 +45,71 @@
       "softwareVersion": "1.3.0",
       "creator": { "@type": "Organization", "name": "AszureX", "url": "https://aszurex.com" },
       "description": "A fully offline business operating system with billing, inventory, CRM, reporting, and an on-device AI assistant. Your business data never leaves your device. Free for the first 100 days, then a small annual license."
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is Sarang Business OS Lite?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Sarang is a free, fully offline business management app for Windows built by AszureX. It covers billing, inventory, CRM, HR/payroll, accounting, and reporting in one installer, with a setup wizard that configures itself for your specific business type — retail, restaurant, clinic, distributor, and 46 others." }
+        },
+        {
+          "@type": "Question",
+          "name": "Is Sarang really free?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Yes — Sarang is free to use with full functionality for your first 100 days, not a limited trial. After that, keeping it running costs ₹6,999/year in India or $149/year internationally, billed once a year per device. There are no other fees, no forced ads, and no paywalled features during or after the free period." }
+        },
+        {
+          "@type": "Question",
+          "name": "Does Sarang work without an internet connection?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Yes. Sarang is fully offline by design — billing, inventory, reports, and even its built-in AI assistant all run entirely on your computer with no internet connection required. This is different from most billing and ERP software, which depends on a live cloud connection to function." }
+        },
+        {
+          "@type": "Question",
+          "name": "What kind of businesses can use Sarang?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Sarang supports 50 business types out of the box, including restaurants and cafés, retail and general stores, pharmacies, distributors, clothing and footwear stores, hardware stores, jewellery shops, hotels, manufacturers, clinics and other healthcare practices, and a range of professional and service businesses. You pick your business type during setup and Sarang configures the right fields, workflows, and reports automatically." }
+        },
+        {
+          "@type": "Question",
+          "name": "Is my business data safe with Sarang?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Your business data stays on your own device — Sarang stores everything in a local database and AszureX has no access to it. There's no cloud sync and no server your data passes through. Sarang does send a small anonymous usage signal (aggregate, not tied to your business data)." }
+        },
+        {
+          "@type": "Question",
+          "name": "How is Sarang different from cloud-based billing or ERP software?",
+          "acceptedAnswer": { "@type": "Answer", "text": "The core difference is that Sarang runs entirely offline on your own device instead of depending on a live internet connection and a vendor's cloud servers. That means no monthly cloud subscription, no downtime if your internet goes out, and your data never leaves your computer. Sarang is priced as one small annual license per device rather than a recurring per-user cloud subscription." }
+        },
+        {
+          "@type": "Question",
+          "name": "What languages does Sarang support?",
+          "acceptedAnswer": { "@type": "Answer", "text": "13 languages, switchable any time from Settings with no reinstall: English, Hindi, Marathi, Gujarati, Kannada, Tamil, Telugu, Malayalam, Spanish, French, Portuguese, Indonesian, and Arabic (right-to-left supported)." }
+        },
+        {
+          "@type": "Question",
+          "name": "What is Sarang's built-in AI assistant?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Sarang ships with a local AI model that runs entirely on your computer, with no internet connection and no data sent anywhere. You can ask it about today's sales, low stock, or outstanding payments in plain language, and it answers from your real data using a fixed set of verified queries — it never invents numbers. It's currently available in English and runs CPU-only." }
+        },
+        {
+          "@type": "Question",
+          "name": "What are the system requirements for Sarang?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Sarang runs on Windows 10 or 11 (64-bit) and works comfortably on modest hardware. 8GB of RAM is recommended if you plan to use the on-device AI assistant." }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I get a refund on a Sarang license?",
+          "acceptedAnswer": { "@type": "Answer", "text": "License payments are non-refundable." }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I get started with Sarang?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Download the installer from aszurex.com/sarang.html — it's a single installer with no sign-up required beyond your download details, and full functionality is available from day one." }
+        },
+        {
+          "@type": "Question",
+          "name": "Who makes Sarang?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Sarang is built by AszureX, a software development and technical support company. Sarang is AszureX's own free product, built with the same engineering standards the company applies to client work." }
+        }
+      ]
     }
   ]
 }
@@ -195,6 +260,26 @@ gtag('config', 'G-QXB4ECJFTP');
     .sarang-feature-grid { grid-template-columns: 1fr; }
     .sarang-biztype-grid { grid-template-columns: 1fr 1fr; }
   }
+  .sarang-faq-list {
+    margin-top: 40px; display: flex; flex-direction: column; gap: 12px;
+  }
+  .sarang-faq-item {
+    background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    padding: 4px 24px;
+  }
+  .sarang-faq-item summary {
+    padding: 18px 0; font-size: 16px; font-weight: 600; color: var(--text);
+    cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 16px;
+  }
+  .sarang-faq-item summary::-webkit-details-marker { display: none; }
+  .sarang-faq-item summary::after {
+    content: '+'; font-size: 20px; font-weight: 400; color: var(--text-faint); flex-shrink: 0;
+  }
+  .sarang-faq-item[open] summary::after { content: '−'; }
+  .sarang-faq-item p {
+    margin: 0 0 20px; font-size: 15px; line-height: 1.75; color: var(--text-mid);
+  }
+  .sarang-faq-item p a { color: var(--accent); text-decoration: underline; }
 </style>
 </head>
 <body>
@@ -646,6 +731,67 @@ gtag('config', 'G-QXB4ECJFTP');
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>
         Role-based access — Admin, Manager, Cashier, Staff, Kitchen Staff
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ — visible content mirrors the FAQPage JSON-LD in <head> exactly,
+     per Google's own guidance (structured data should reflect on-page
+     content, not exist only in markup). Native <details>/<summary>: no JS,
+     fully crawlable, works with assistive tech out of the box. -->
+<section class="qual-section" style="background:var(--bg-alt);" id="faq">
+  <div class="container" style="max-width:820px;">
+    <p class="eyebrow">Frequently Asked Questions</p>
+    <h2 class="section-h2">Common questions about Sarang</h2>
+    <div class="sarang-faq-list">
+      <details class="sarang-faq-item">
+        <summary>What is Sarang Business OS Lite?</summary>
+        <p>Sarang is a free, fully offline business management app for Windows built by AszureX. It covers billing, inventory, CRM, HR/payroll, accounting, and reporting in one installer, with a setup wizard that configures itself for your specific business type — retail, restaurant, clinic, distributor, and 46 others.</p>
+      </details>
+      <details class="sarang-faq-item">
+        <summary>Is Sarang really free?</summary>
+        <p>Yes — Sarang is free to use with full functionality for your first 100 days, not a limited trial. After that, keeping it running costs ₹6,999/year in India or $149/year internationally, billed once a year per device. There are no other fees, no forced ads, and no paywalled features during or after the free period.</p>
+      </details>
+      <details class="sarang-faq-item">
+        <summary>Does Sarang work without an internet connection?</summary>
+        <p>Yes. Sarang is fully offline by design — billing, inventory, reports, and even its built-in AI assistant all run entirely on your computer with no internet connection required. This is different from most billing and ERP software, which depends on a live cloud connection to function.</p>
+      </details>
+      <details class="sarang-faq-item">
+        <summary>What kind of businesses can use Sarang?</summary>
+        <p>Sarang supports 50 business types out of the box, including restaurants and cafés, retail and general stores, pharmacies, distributors, clothing and footwear stores, hardware stores, jewellery shops, hotels, manufacturers, clinics and other healthcare practices, and a range of professional and service businesses. You pick your business type during setup and Sarang configures the right fields, workflows, and reports automatically.</p>
+      </details>
+      <details class="sarang-faq-item">
+        <summary>Is my business data safe with Sarang?</summary>
+        <p>Your business data stays on your own device — Sarang stores everything in a local database and AszureX has no access to it. There's no cloud sync and no server your data passes through. Sarang does send a small anonymous usage signal (aggregate, not tied to your business data) — full details are in the <a href="/sarang-privacy.html">Privacy Policy</a>.</p>
+      </details>
+      <details class="sarang-faq-item">
+        <summary>How is Sarang different from cloud-based billing or ERP software?</summary>
+        <p>The core difference is that Sarang runs entirely offline on your own device instead of depending on a live internet connection and a vendor's cloud servers. That means no monthly cloud subscription, no downtime if your internet goes out, and your data never leaves your computer. Sarang is priced as one small annual license per device rather than a recurring per-user cloud subscription.</p>
+      </details>
+      <details class="sarang-faq-item">
+        <summary>What languages does Sarang support?</summary>
+        <p>13 languages, switchable any time from Settings with no reinstall: English, Hindi, Marathi, Gujarati, Kannada, Tamil, Telugu, Malayalam, Spanish, French, Portuguese, Indonesian, and Arabic (right-to-left supported). Some specialised service-vertical templates run English-only; every retail and product-based business gets the full language set.</p>
+      </details>
+      <details class="sarang-faq-item">
+        <summary>What is Sarang's built-in AI assistant?</summary>
+        <p>Sarang ships with a local AI model that runs entirely on your computer, with no internet connection and no data sent anywhere. You can ask it about today's sales, low stock, or outstanding payments in plain language, and it answers from your real data using a fixed set of verified queries — it never invents numbers. It's currently available in English and runs CPU-only, with no dedicated graphics card required.</p>
+      </details>
+      <details class="sarang-faq-item">
+        <summary>What are the system requirements for Sarang?</summary>
+        <p>Sarang runs on Windows 10 or 11 (64-bit) and works comfortably on modest hardware. 8GB of RAM is recommended if you plan to use the on-device AI assistant.</p>
+      </details>
+      <details class="sarang-faq-item">
+        <summary>Can I get a refund on a Sarang license?</summary>
+        <p>License payments are non-refundable. Full details are in the <a href="/sarang-refund.html">Refund &amp; Cancellation Policy</a>.</p>
+      </details>
+      <details class="sarang-faq-item">
+        <summary>How do I get started with Sarang?</summary>
+        <p>Download the installer from this page — it's a single installer with no sign-up required beyond your download details, and full functionality is available from day one. See the <a href="#download">Download</a> section above for the direct link.</p>
+      </details>
+      <details class="sarang-faq-item">
+        <summary>Who makes Sarang?</summary>
+        <p>Sarang is built by <a href="/">AszureX</a>, a software development and technical support company. Sarang is AszureX's own free product, built with the same engineering standards the company applies to client work.</p>
+      </details>
     </div>
   </div>
 </section>
