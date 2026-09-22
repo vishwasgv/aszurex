@@ -84,7 +84,7 @@ built and given away by AszureX as a standalone tool any business can use.
   inventory, and payments in plain language from a fixed set of verified
   queries — it does not invent figures and sends no data anywhere.
 - **Refunds**: License payments are non-refundable.
-- **Version**: 1.3.0 (current as of September 2026).
+- **Version**: 1.5.0 (current as of September 2026).
 - **Download**: https://aszurex.com/sarang.html#download (single installer,
   no sign-up beyond download details, full functionality from day one).
 
