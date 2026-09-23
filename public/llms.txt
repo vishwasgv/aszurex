@@ -54,7 +54,7 @@ for Windows. It is a separate product from AszureX's client services above —
 built and given away by AszureX as a standalone tool any business can use.
 
 > Sarang is a free, fully offline business operating system for Windows —
-> billing, inventory, CRM, HR/payroll, accounting, and reporting in one
+> billing, inventory, CRM, HR/payroll, ledger and books, and reporting in one
 > installer, with an on-device AI assistant and zero cloud dependency.
 
 ### Key facts
