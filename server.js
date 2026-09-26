@@ -276,6 +276,19 @@ function generateSarangLicenseKeyV2(tier, region, issuedAt) {
   return `SARANG2-${payload}-${sigHex}`;
 }
 
+// ── Sarang: SARANG3 (Ed25519) key issuance with a seat count, 2026-09-26 ──
+// Mirrors sarang-business-os/src/main/services/license-seats.util.ts's parseSeatKey() exactly:
+// SARANG3-<TIER>-<REGION>-<issuedDateBase36Days>-<seatsBase36>-<nonce>-<signature>.
+// Seats = how many PCs may be signed in at once (the shop PC counts as one). 1 to 99.
+function generateSarangLicenseKeyV3(tier, region, issuedAt, seats) {
+  const n = Math.max(1, Math.min(99, Math.floor(Number(seats) || 1)));
+  const daysSinceEpoch = Math.floor(issuedAt.getTime() / 86_400_000);
+  const nonce = randomBytes(6).toString('hex');
+  const payload = `${tier}-${region}-${daysSinceEpoch.toString(36)}-${n.toString(36)}-${nonce}`;
+  const sigHex = cryptoSign(null, Buffer.from(payload), SARANG_LICENSE_ED25519_PRIVATE_KEY).toString('hex');
+  return `SARANG3-${payload}-${sigHex}`;
+}
+
 // ── Sarang: remote kill-switch token (Phase 59.6, hardened 2026-09-02) ──
 // Mirrors sarang-business-os/src/main/services/license.service.ts's
 // signKillSwitchToken()/parseAndVerifyKillSwitchToken() exactly — same
@@ -623,9 +636,10 @@ app.post('/api/sarang-heartbeat', (req, res) => {
 });
 
 // ── Shared: issue a PAID license key and email it (59.9/59.12) ──
-async function issueRenewalKey({ email, region }) {
+async function issueRenewalKey({ email, region, seats = 1 }) {
   const issuedAt = new Date();
-  const licenseKey = generateSarangLicenseKeyV2('PAID', region, issuedAt);
+  // One seat (the shop PC) keeps the plain SARANG2 key; more seats need the SARANG3 key that carries the count.
+  const licenseKey = seats > 1 ? generateSarangLicenseKeyV3('PAID', region, issuedAt, seats) : generateSarangLicenseKeyV2('PAID', region, issuedAt);
   await createTransporter().sendMail({
     from: `"AszureX" <${ZOHO_EMAIL}>`,
     to: email,
@@ -633,13 +647,13 @@ async function issueRenewalKey({ email, region }) {
     subject: 'Your renewed Sarang license',
     html: `
       <div style="font-family:Arial,sans-serif;max-width:600px;">
-        <h2 style="color:#0EA5E9;">Thank you for renewing Sarang</h2>
+        <h2 style="color:#0EA5E9;">Thank you for renewing Sarang</h2>${seats > 1 ? `<p>This key covers ${seats} PCs signed in at the same time.</p>` : ''}
         <p>Your new license key is below — enter it in Sarang under Settings → License to keep everything working exactly as before.</p>
         <p style="font-family:monospace;font-size:16px;background:#f7f9fc;border-left:4px solid #0EA5E9;padding:12px 16px;border-radius:4px;">${licenseKey}</p>
       </div>
     `
   });
-  console.log(`✅ Renewal key issued and emailed — ${email} (${region})`);
+  console.log(`✅ Renewal key issued and emailed — ${email} (${region}, ${seats} seat${seats === 1 ? '' : 's'})`);
   return licenseKey;
 }
 
@@ -674,7 +688,9 @@ app.post('/api/webhooks/razorpay', async (req, res) => {
         console.error('❌ Razorpay webhook payment.captured with no email on the payload — cannot issue a key.', JSON.stringify(event).slice(0, 500));
         return res.status(200).json({ success: true }); // ack the webhook regardless so Razorpay doesn't retry forever; log for manual follow-up
       }
-      await issueRenewalKey({ email, region: 'IN' });
+      // Extra PCs are sold as a payment link/order carrying notes.seats (total PCs, shop PC included).
+      const notes = event.payload?.payment?.entity?.notes || event.payload?.payment_link?.entity?.notes || {};
+      await issueRenewalKey({ email, region: 'IN', seats: Number(notes.seats) || 1 });
     }
 
     return res.status(200).json({ success: true });
@@ -713,7 +729,8 @@ app.post('/api/webhooks/lemonsqueezy', async (req, res) => {
         console.error('❌ Lemon Squeezy webhook with no email on the payload — cannot issue a key.', JSON.stringify(event).slice(0, 500));
         return res.status(200).json({ success: true });
       }
-      await issueRenewalKey({ email, region: 'INTL' });
+      const custom = event.meta?.custom_data || {};
+      await issueRenewalKey({ email, region: 'INTL', seats: Number(custom.seats) || 1 });
     }
 
     return res.status(200).json({ success: true });
