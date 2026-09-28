@@ -1025,6 +1025,31 @@ gtag('config', 'G-QXB4ECJFTP');
   </div>
 </div>
 <script>
+// Partner-referral capture (U7, 2026-09-29) — a ?ref=CODE in the URL (from a partner's link)
+// is remembered for 90 days so it still counts even if someone browses around before
+// downloading. It travels with the download-lead payload only; it is never required and
+// never blocks the form if absent.
+(function captureSarangReferral() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('ref');
+    const REF_KEY = 'sarang_ref_code', REF_AT_KEY = 'sarang_ref_captured_at';
+    const NINETY_DAYS_MS = 90 * 24 * 60 * 60 * 1000;
+    if (ref) {
+      localStorage.setItem(REF_KEY, ref.trim().toUpperCase().slice(0, 40));
+      localStorage.setItem(REF_AT_KEY, String(Date.now()));
+    } else {
+      const capturedAt = Number(localStorage.getItem(REF_AT_KEY) || 0);
+      if (capturedAt && Date.now() - capturedAt > NINETY_DAYS_MS) {
+        localStorage.removeItem(REF_KEY);
+        localStorage.removeItem(REF_AT_KEY);
+      }
+    }
+  } catch (e) { /* private browsing or storage blocked — referral simply isn't tracked */ }
+})();
+function currentSarangRefCode() {
+  try { return localStorage.getItem('sarang_ref_code') || ''; } catch (e) { return ''; }
+}
 function openSarangDownloadModal() {
   document.getElementById('sarang-download-modal').style.display = 'flex';
   document.getElementById('sarang-modal-form-view').style.display = 'block';
@@ -1046,6 +1071,8 @@ async function submitSarangDownloadForm(evt) {
   btn.textContent = 'Please wait…';
   try {
     const body = Object.fromEntries(new FormData(form).entries());
+    const refCode = currentSarangRefCode();
+    if (refCode) body.refCode = refCode;
     const res = await fetch('/api/sarang-download', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

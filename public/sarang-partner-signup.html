@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Join the Sarang partner program — refer businesses to Sarang and earn a referral commission.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://aszurex.com/sarang-partner-signup.html">
+<link rel="icon" href="/favicon.png" type="image/png" sizes="any">
+<link rel="icon" href="/aszurex-logo.png" type="image/png" sizes="512x512">
+<meta name="theme-color" content="#06090F">
+<title>Become a Partner | Sarang | AszureX</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="css/style.css">
+<noscript><style>.reveal{opacity:1 !important;transform:none !important;transition:none !important;}</style></noscript>
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="container">
+      <a href="/" class="logo" aria-label="AszureX Home">
+        <img src="/aszurex-logo.png" alt="AszureX" class="logo-icon-img">
+        <div class="logo-wordmark">
+          <span class="logo-text">AszureX</span>
+          <span class="logo-tagline">Trust Beyond Limits...</span>
+        </div>
+      </a>
+      <button class="hamburger" aria-label="Toggle menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-menu">
+        <li><a href="/">Home</a></li>
+        <li><a href="/sarang.html">Sarang</a></li>
+        <li><a href="/contact.html">Contact</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <section class="page-header">
+    <div class="container">
+      <div class="page-header-inner">
+        <p class="page-eyebrow">Sarang Business OS Lite — Partner Program</p>
+        <h1 class="page-h1">Become a Sarang partner</h1>
+        <p class="page-sub">Accountants, IT dealers and consultants who introduce shops to Sarang earn a 20% referral commission on the first paid year. Read the full <a href="/sarang-partners.html" style="color:#0EA5E9;">Partner Terms</a> first — signing up here means you accept them.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="contact-section">
+    <div class="container" style="max-width:560px;">
+      <div id="signup-form-view">
+        <form id="partner-signup-form">
+          <div class="form-group"><label class="form-label" for="p-name">Your Name *</label><input required id="p-name" name="name" class="form-input" placeholder="Jane Doe"></div>
+          <div class="form-group"><label class="form-label" for="p-email">Email Address *</label><input required id="p-email" type="email" name="email" class="form-input" placeholder="jane@firm.com"></div>
+          <div class="form-group"><label class="form-label" for="p-phone">Phone Number *</label><input required id="p-phone" name="phone" class="form-input" placeholder="+91 98765 43210"></div>
+          <div class="form-group"><label class="form-label" for="p-business">Business Name *</label><input required id="p-business" name="businessName" class="form-input" placeholder="Your firm / agency"></div>
+          <div class="form-group"><label class="form-label" for="p-city">City *</label><input required id="p-city" name="city" class="form-input" placeholder="Bengaluru"></div>
+          <div class="form-group"><label class="form-label" for="p-pan">PAN (India partners)</label><input id="p-pan" name="pan" class="form-input" placeholder="ABCDE1234F"></div>
+          <div class="form-group"><label class="form-label" for="p-gstin">GSTIN (if registered)</label><input id="p-gstin" name="gstin" class="form-input" placeholder="Optional"></div>
+          <div class="form-group"><label class="form-label" for="p-notes">How do you plan to refer customers? (Optional)</label><textarea id="p-notes" name="notes" class="form-textarea" rows="4" placeholder="Existing clients, a local network, etc."></textarea></div>
+          <label style="display:flex;align-items:flex-start;gap:8px;margin:0 0 16px;font-size:0.8rem;color:var(--text-faint2);cursor:pointer;">
+            <input required type="checkbox" name="acceptedTerms" value="yes" style="margin-top:2px;flex-shrink:0;">
+            <span>I have read and accept the <a href="/sarang-partners.html" style="color:#0EA5E9;">Sarang Partner Terms</a>.</span>
+          </label>
+          <button type="submit" class="form-submit" id="partner-signup-btn">Apply to become a partner</button>
+          <p id="partner-signup-error" style="color:var(--danger);font-size:0.85rem;margin:10px 0 0;display:none;"></p>
+        </form>
+      </div>
+      <div id="signup-success-view" style="display:none;text-align:center;padding:20px 0;">
+        <h2 class="section-h2" style="font-size:1.4rem;">Application received</h2>
+        <p style="color:var(--text-faint2);">We review every partner request by hand — you'll hear from us at <b id="success-email"></b> within a few business days. If accepted, we'll send you your partner code and a partner link to start referring customers.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom">
+        <p class="footer-copy">&copy; 2026 AszureX. All rights reserved. <a href="/privacy.html" style="color:inherit;text-decoration:underline;">Privacy Policy</a> · <a href="/terms.html" style="color:inherit;text-decoration:underline;">Terms of Use</a></p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/config.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    document.getElementById('partner-signup-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const form = e.target;
+      const btn = document.getElementById('partner-signup-btn');
+      const errorEl = document.getElementById('partner-signup-error');
+      errorEl.style.display = 'none';
+      btn.disabled = true;
+      btn.textContent = 'Please wait…';
+      try {
+        const body = Object.fromEntries(new FormData(form).entries());
+        const res = await fetch('/api/partner-signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message || 'Something went wrong.');
+        document.getElementById('success-email').textContent = body.email;
+        document.getElementById('signup-form-view').style.display = 'none';
+        document.getElementById('signup-success-view').style.display = 'block';
+      } catch (err) {
+        errorEl.textContent = err.message || 'Something went wrong. Please try again or email contact@aszurex.com.';
+        errorEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Apply to become a partner';
+      }
+    });
+  </script>
+</body>
+</html>

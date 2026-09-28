@@ -51,6 +51,10 @@ const SARANG_DEVICE_SHEET_WEBHOOK_URL = process.env.SARANG_DEVICE_SHEET_WEBHOOK_
 // above: the suggestion email still sends regardless, this just also logs
 // submissions to a durable, queryable list.
 const SARANG_SUGGESTION_SHEET_WEBHOOK_URL = process.env.SARANG_SUGGESTION_SHEET_WEBHOOK_URL || '';
+// Google Apps Script Web App URL for the Sarang partner-signup sheet (U7, 2026-09-29) — same
+// "still works without it" reasoning as the other sheets: the notification email still sends
+// regardless, this just also logs applications to a durable, queryable list for review.
+const SARANG_PARTNER_SIGNUP_SHEET_WEBHOOK_URL = process.env.SARANG_PARTNER_SIGNUP_SHEET_WEBHOOK_URL || '';
 // Google Apps Script Web App URL for the Sarang add-seats request sheet (U5, 2026-09-29) —
 // same "still works without it" reasoning as the other sheets: the notification email to
 // AszureX still sends regardless, this just also logs requests to a durable, queryable list.
@@ -316,6 +320,80 @@ app.post('/api/sarang-seat-checkout', async (req, res) => {
   }
 });
 
+// ── Sarang: partner program sign-up (U7, 2026-09-29) ────────
+// A partner code here is a SUGGESTION only — sarang-partners.html section 2 is explicit that
+// every application is reviewed by hand and may be declined; the founder confirms or changes
+// this code when accepting the partner, then bakes it into that partner's Payment Link
+// (notes.ref for Razorpay, checkout[custom][ref] for Lemon Squeezy) and their referral URL
+// (?ref=CODE on sarang.html — see captureSarangReferral() there).
+function suggestPartnerCode(businessName) {
+  const slug = (businessName || 'PARTNER').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10) || 'PARTNER';
+  const suffix = Math.floor(100 + Math.random() * 900); // 3 digits, never leading-zero-ambiguous
+  return `${slug}${suffix}`;
+}
+
+app.post('/api/partner-signup', async (req, res) => {
+  try {
+    const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown';
+    if (isRateLimited(ip)) {
+      return res.status(429).json({ success: false, message: 'Too many requests. Please try again later.' });
+    }
+
+    const { name, email, phone, businessName, city, pan, gstin, notes, acceptedTerms } = req.body;
+    if (!name || !email || !phone || !businessName || !city) {
+      return res.status(400).json({ success: false, message: 'Please fill in all required fields.' });
+    }
+    if (!SARANG_EMAIL_RE.test(email)) {
+      return res.status(400).json({ success: false, message: 'Please enter a valid email address.' });
+    }
+    if (acceptedTerms !== 'yes') {
+      return res.status(400).json({ success: false, message: 'Please accept the Partner Terms to continue.' });
+    }
+
+    const suggestedCode = suggestPartnerCode(businessName);
+    const submittedAt = new Date().toISOString();
+
+    if (SARANG_PARTNER_SIGNUP_SHEET_WEBHOOK_URL) {
+      fetch(SARANG_PARTNER_SIGNUP_SHEET_WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, phone, businessName, city, pan: pan || '', gstin: gstin || '', notes: notes || '', suggestedCode, status: 'pending review', submittedAt })
+      }).catch(err => console.error('⚠️  Sarang partner-signup sheet webhook failed (non-blocking):', err.message));
+    }
+
+    await createTransporter().sendMail({
+      from: `"AszureX" <${ZOHO_EMAIL}>`,
+      to: TO_EMAIL,
+      replyTo: email,
+      subject: `New partner application: ${businessName} (${name})`,
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:600px;">
+          <h3 style="color:#0D1321;">New Sarang partner application</h3>
+          <table style="width:100%;border-collapse:collapse;">
+            <tr><td style="padding:6px 0;color:#666;width:140px;"><b>Name</b></td><td>${name}</td></tr>
+            <tr><td style="padding:6px 0;color:#666;"><b>Email</b></td><td><a href="mailto:${email}">${email}</a></td></tr>
+            <tr><td style="padding:6px 0;color:#666;"><b>Phone</b></td><td>${phone}</td></tr>
+            <tr><td style="padding:6px 0;color:#666;"><b>Business</b></td><td>${businessName}</td></tr>
+            <tr><td style="padding:6px 0;color:#666;"><b>City</b></td><td>${city}</td></tr>
+            <tr><td style="padding:6px 0;color:#666;"><b>PAN</b></td><td>${pan || 'Not given'}</td></tr>
+            <tr><td style="padding:6px 0;color:#666;"><b>GSTIN</b></td><td>${gstin || 'Not given'}</td></tr>
+            <tr><td style="padding:6px 0;color:#666;"><b>Suggested code</b></td><td><b>${suggestedCode}</b> (edit if you like before using it)</td></tr>
+          </table>
+          ${notes ? `<p style="color:#666;margin-top:12px;"><b>How they plan to refer:</b><br>${String(notes).replace(/\n/g, '<br>')}</p>` : ''}
+          <p style="color:#666;font-size:13px;margin-top:16px;">To accept: reply to this email, then send them a partner link like https://aszurex.com/sarang.html?ref=${suggestedCode} and, when you create their Payment Link, set notes.ref=${suggestedCode} (Razorpay) or checkout[custom][ref]=${suggestedCode} in their Lemon Squeezy checkout URL — commission then logs itself automatically.</p>
+        </div>
+      `
+    });
+
+    console.log(`✅ Partner application received and founder notified — ${businessName} (${email}), suggested code ${suggestedCode}`);
+    return res.json({ success: true });
+
+  } catch (error) {
+    console.error('❌ Partner signup error:', error.message);
+    return res.status(500).json({ success: false, message: 'Something went wrong. Please try again or email contact@aszurex.com.' });
+  }
+});
+
 // ── Sarang: license key generation (Phase 59.2) ─────────────
 // Mirrors sarang-business-os/src/main/services/license.service.ts's
 // generateLicenseKey()/parseAndVerifyLicenseKey() exactly — same format,
@@ -455,8 +533,12 @@ app.post('/api/sarang-download', async (req, res) => {
       return res.json({ success: true, downloadUrl: SARANG_DOWNLOAD_URL });
     }
 
-    const { name, email, phone, country, businessName, businessType, state, city, marketingOptIn } = req.body;
+    const { name, email, phone, country, businessName, businessType, state, city, marketingOptIn, refCode } = req.body;
     const optedInToMarketing = marketingOptIn === 'yes' || marketingOptIn === true;
+    // Partner-referral tag (U7) — free text from the ?ref= link, logged as-is for the founder
+    // to cross-reference against partner codes; never validated against a partner list here
+    // (partners are approved and tracked by hand, see sarang-partners.html section 2).
+    const cleanRefCode = typeof refCode === 'string' ? refCode.trim().toUpperCase().slice(0, 40) : '';
     if (!name || !email || !phone || !country || !businessName || !businessType) {
       return res.status(400).json({ success: false, message: 'Please fill in all required fields.' });
     }
@@ -478,7 +560,7 @@ app.post('/api/sarang-download', async (req, res) => {
       fetch(SARANG_LEAD_SHEET_WEBHOOK_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, phone, country, state: state || '', city: city || '', businessName: businessName || '', businessType: businessType || '', region, licenseKey, issuedAt: issuedAt.toISOString(), marketingOptIn: optedInToMarketing })
+        body: JSON.stringify({ name, email, phone, country, state: state || '', city: city || '', businessName: businessName || '', businessType: businessType || '', region, licenseKey, issuedAt: issuedAt.toISOString(), marketingOptIn: optedInToMarketing, refCode: cleanRefCode })
       }).catch(err => console.error('⚠️  Sarang lead-sheet webhook failed (non-blocking):', err.message));
     }
 
@@ -784,6 +866,29 @@ async function issueRenewalKey({ email, region, seats = 1, receipt = null }) {
 // Signature verification is NOT optional — see PHASE_59 doc Section 59.9.
 // Without this, anyone who finds this URL could forge a fake "payment
 // captured" event and mint themselves a free PAID key.
+// Google Apps Script Web App URL for the Sarang partner-commission sheet (U7, 2026-09-29) —
+// this sheet IS the commission ledger: the founder reviews each row and pays out by hand
+// (see sarang-partners.html section 4 — commission is calculated, never auto-disbursed).
+const SARANG_COMMISSION_SHEET_WEBHOOK_URL = process.env.SARANG_COMMISSION_SHEET_WEBHOOK_URL || '';
+const PARTNER_COMMISSION_RATE = 0.20; // matches sarang-partners.html section 4 — first paid year only
+
+// Logs a commission line when a paid key is issued with a partner ref attached (set on the
+// Payment Link/checkout the founder creates for that partner, per sarang-partners.html section
+// 2). Never blocks key issuance — a missing/misconfigured sheet loses only the ledger row, not
+// the customer's license.
+function recordPartnerCommission({ ref, email, amountValue, currency, region, paymentRef }) {
+  if (!ref || !amountValue) return;
+  const commission = Math.round(amountValue * PARTNER_COMMISSION_RATE * 100) / 100;
+  console.log(`✅ Partner commission: ${ref} earns ${currency}${commission} on ${email} (${region}, ref ${paymentRef})`);
+  if (SARANG_COMMISSION_SHEET_WEBHOOK_URL) {
+    fetch(SARANG_COMMISSION_SHEET_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ref, customerEmail: email, saleAmount: amountValue, currency, commissionAmount: commission, region, paymentRef, recordedAt: new Date().toISOString() })
+    }).catch(err => console.error('⚠️  Sarang commission-sheet webhook failed (non-blocking):', err.message));
+  }
+}
+
 app.post('/api/webhooks/razorpay', async (req, res) => {
   try {
     if (!RAZORPAY_WEBHOOK_SECRET) {
@@ -812,6 +917,8 @@ app.post('/api/webhooks/razorpay', async (req, res) => {
         return res.status(200).json({ success: true }); // ack the webhook regardless so Razorpay doesn't retry forever; log for manual follow-up
       }
       // Extra PCs are sold as a payment link/order carrying notes.seats (total PCs, shop PC included).
+      // A partner sale is a payment link/order carrying notes.ref (the partner's code) — set by
+      // the founder when creating that partner's Payment Link, per sarang-partners.html section 2.
       const notes = event.payload?.payment?.entity?.notes || event.payload?.payment_link?.entity?.notes || {};
       const paymentEntity = event.payload?.payment?.entity;
       const receipt = paymentEntity?.amount ? {
@@ -820,6 +927,9 @@ app.post('/api/webhooks/razorpay', async (req, res) => {
         paymentRef: paymentEntity.id
       } : null;
       await issueRenewalKey({ email, region: 'IN', seats: Number(notes.seats) || 1, receipt });
+      if (paymentEntity?.amount) {
+        recordPartnerCommission({ ref: notes.ref, email, amountValue: paymentEntity.amount / 100, currency: '₹', region: 'IN', paymentRef: paymentEntity.id });
+      }
     }
 
     return res.status(200).json({ success: true });
@@ -872,6 +982,11 @@ app.post('/api/webhooks/lemonsqueezy', async (req, res) => {
         receiptUrl: lsAttrs.urls?.receipt || lsAttrs.receipt_url || null
       } : null;
       await issueRenewalKey({ email, region: 'INTL', seats: Number(custom.seats) || 1, receipt });
+      // custom.ref (checkout[custom][ref] on the partner's checkout URL) mirrors Razorpay's notes.ref.
+      const totalAmount = Number(lsAttrs?.total) / 100; // LS gives cents; total_formatted is display-only text
+      if (Number.isFinite(totalAmount) && totalAmount > 0) {
+        recordPartnerCommission({ ref: custom.ref, email, amountValue: totalAmount, currency: lsAttrs?.currency ? `${lsAttrs.currency} ` : '$', region: 'INTL', paymentRef: lsAttrs?.order_number || event.data?.id });
+      }
     }
 
     return res.status(200).json({ success: true });
