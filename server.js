@@ -51,6 +51,17 @@ const SARANG_DEVICE_SHEET_WEBHOOK_URL = process.env.SARANG_DEVICE_SHEET_WEBHOOK_
 // above: the suggestion email still sends regardless, this just also logs
 // submissions to a durable, queryable list.
 const SARANG_SUGGESTION_SHEET_WEBHOOK_URL = process.env.SARANG_SUGGESTION_SHEET_WEBHOOK_URL || '';
+// Google Apps Script Web App URL for the Sarang add-seats request sheet (U5, 2026-09-29) —
+// same "still works without it" reasoning as the other sheets: the notification email to
+// AszureX still sends regardless, this just also logs requests to a durable, queryable list.
+const SARANG_SEAT_REQUEST_SHEET_WEBHOOK_URL = process.env.SARANG_SEAT_REQUEST_SHEET_WEBHOOK_URL || '';
+// Optional per-seat-count static Payment Link lookup (U5) — once real Razorpay Payment Links
+// and Lemon Squeezy checkout URLs are created for specific seat tiers, set this to JSON like
+// {"2":{"IN":"https://rzp.io/...","INTL":"https://aszurex.lemonsqueezy.com/checkout/buy/..."}}
+// and matching requests are sent straight to checkout instead of the email-request fallback.
+let SARANG_SEAT_PAYMENT_LINKS = {};
+try { SARANG_SEAT_PAYMENT_LINKS = JSON.parse(process.env.SARANG_SEAT_PAYMENT_LINKS_JSON || '{}'); }
+catch { console.error('❌ SARANG_SEAT_PAYMENT_LINKS_JSON is not valid JSON — ignoring it, falling back to email requests for all seat counts.'); }
 if (!process.env.SARANG_LICENSE_HMAC_SECRET) {
   console.error('❌ SARANG_LICENSE_HMAC_SECRET not set — using an insecure dev placeholder. Set this before going live.');
 }
@@ -232,6 +243,79 @@ app.post('/api/apply', upload.single('resume'), async (req, res) => {
   }
 });
 
+// ── Sarang: add-seats request (U5, 2026-09-29) ──────────────
+// If SARANG_SEAT_PAYMENT_LINKS_JSON has a real Payment Link for this exact seat count and
+// region, send the customer straight there. Otherwise — which is every request today, since
+// no real per-tier links exist yet — email AszureX so the founder can create the right-amount
+// Razorpay Payment Link or Lemon Squeezy checkout by hand and send it on; this keeps the page
+// genuinely usable before that automation exists, not just decorative.
+const sarangSeatRequestHits = new Map(); // ip -> [timestamps]
+function isSeatRequestRateLimited(ip) {
+  const now = Date.now();
+  const hits = (sarangSeatRequestHits.get(ip) || []).filter(t => now - t < 60 * 60 * 1000);
+  hits.push(now);
+  sarangSeatRequestHits.set(ip, hits);
+  return hits.length > 5; // 5 requests/hour/IP — a genuine buyer never needs more than a couple
+}
+
+app.post('/api/sarang-seat-checkout', async (req, res) => {
+  try {
+    const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown';
+    if (isSeatRequestRateLimited(ip)) {
+      return res.status(429).json({ success: false, message: 'Too many requests. Please try again later.' });
+    }
+
+    const { email, seats, region } = req.body;
+    const seatCount = Number(seats);
+    if (!email || !SARANG_EMAIL_RE.test(email)) {
+      return res.status(400).json({ success: false, message: 'Please enter a valid email address.' });
+    }
+    if (!Number.isInteger(seatCount) || seatCount < 2 || seatCount > 20) {
+      return res.status(400).json({ success: false, message: 'Please choose between 2 and 20 total PCs.' });
+    }
+    const seatRegion = region === 'INTL' ? 'INTL' : 'IN';
+
+    // A ready-made Payment Link for this exact tier — send the customer straight there.
+    const paymentUrl = SARANG_SEAT_PAYMENT_LINKS?.[String(seatCount)]?.[seatRegion];
+    if (paymentUrl) {
+      console.log(`✅ Seat-checkout: known Payment Link used — ${email}, ${seatCount} seats, ${seatRegion}`);
+      return res.json({ success: true, paymentUrl });
+    }
+
+    // No link for this tier yet — notify AszureX to follow up by hand.
+    const submittedAt = new Date().toISOString();
+    if (SARANG_SEAT_REQUEST_SHEET_WEBHOOK_URL) {
+      fetch(SARANG_SEAT_REQUEST_SHEET_WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, seats: seatCount, region: seatRegion, submittedAt })
+      }).catch(err => console.error('⚠️  Sarang seat-request sheet webhook failed (non-blocking):', err.message));
+    }
+    await createTransporter().sendMail({
+      from: `"AszureX" <${ZOHO_EMAIL}>`,
+      to: TO_EMAIL,
+      replyTo: email,
+      subject: `Add-seats request: ${seatCount} PCs (${seatRegion}) — ${email}`,
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:600px;">
+          <h3 style="color:#0D1321;">New add-seats request</h3>
+          <p><b>Email:</b> ${email}</p>
+          <p><b>Total PCs wanted:</b> ${seatCount} (${seatCount - 1} extra)</p>
+          <p><b>Region:</b> ${seatRegion === 'IN' ? 'India (Razorpay)' : 'International (Lemon Squeezy)'}</p>
+          <p style="color:#666;font-size:13px;">Create a Payment Link/checkout for this seat count with notes.seats=${seatCount} (Razorpay) or custom_data.seats=${seatCount} (Lemon Squeezy) and send it to the customer; the renewal webhook already knows how to read that field.</p>
+        </div>
+      `
+    });
+
+    console.log(`✅ Seat-checkout: no link configured, founder notified — ${email}, ${seatCount} seats, ${seatRegion}`);
+    return res.json({ success: true, message: `Thanks — we'll email you a payment link for ${seatCount} PCs shortly.` });
+
+  } catch (error) {
+    console.error('❌ Seat-checkout error:', error.message);
+    return res.status(500).json({ success: false, message: 'Something went wrong. Please email contact@aszurex.com instead.' });
+  }
+});
+
 // ── Sarang: license key generation (Phase 59.2) ─────────────
 // Mirrors sarang-business-os/src/main/services/license.service.ts's
 // generateLicenseKey()/parseAndVerifyLicenseKey() exactly — same format,
@@ -371,7 +455,8 @@ app.post('/api/sarang-download', async (req, res) => {
       return res.json({ success: true, downloadUrl: SARANG_DOWNLOAD_URL });
     }
 
-    const { name, email, phone, country, businessName, businessType, state, city } = req.body;
+    const { name, email, phone, country, businessName, businessType, state, city, marketingOptIn } = req.body;
+    const optedInToMarketing = marketingOptIn === 'yes' || marketingOptIn === true;
     if (!name || !email || !phone || !country || !businessName || !businessType) {
       return res.status(400).json({ success: false, message: 'Please fill in all required fields.' });
     }
@@ -393,7 +478,7 @@ app.post('/api/sarang-download', async (req, res) => {
       fetch(SARANG_LEAD_SHEET_WEBHOOK_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, phone, country, state: state || '', city: city || '', businessName: businessName || '', businessType: businessType || '', region, licenseKey, issuedAt: issuedAt.toISOString() })
+        body: JSON.stringify({ name, email, phone, country, state: state || '', city: city || '', businessName: businessName || '', businessType: businessType || '', region, licenseKey, issuedAt: issuedAt.toISOString(), marketingOptIn: optedInToMarketing })
       }).catch(err => console.error('⚠️  Sarang lead-sheet webhook failed (non-blocking):', err.message));
     }
 
@@ -636,10 +721,47 @@ app.post('/api/sarang-heartbeat', (req, res) => {
 });
 
 // ── Shared: issue a PAID license key and email it (59.9/59.12) ──
-async function issueRenewalKey({ email, region, seats = 1 }) {
+// receipt (optional): { amount, currency, paymentRef, method, receiptUrl } — the ground-truth
+// amount actually captured by the payment provider, not a price we compute ourselves.
+// AszureX does not have a confirmed GST registration/GSTIN on file (2026-09-29) — until one
+// is added below, this is a payment RECEIPT (proof of what was paid, when, and for what), not
+// a GST-compliant tax invoice. Swap ASZUREX_GSTIN once the founder confirms registration status.
+const ASZUREX_GSTIN = ''; // TODO: set once confirmed GST-registered; leave blank otherwise
+const ASZUREX_BUSINESS_ADDRESS = 'AszureX, India'; // TODO: replace with the full registered address once provided
+
+function receiptNumber(paymentRef) {
+  // Not a strict sequential GST invoice number (that needs persistent, unbroken counter
+  // storage this stateless server does not have) — a stable, unique reference per payment.
+  return `AZX-${String(paymentRef || '').slice(-12).toUpperCase() || Date.now().toString(36).toUpperCase()}`;
+}
+
+function receiptHtml({ issuedAt, email, description, receipt }) {
+  if (!receipt || !receipt.amount) return '';
+  const dateStr = issuedAt.toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' });
+  return `
+    <div style="font-family:Arial,sans-serif;max-width:600px;margin-top:24px;border:1px solid #e5e7eb;border-radius:8px;padding:20px;">
+      <h3 style="color:#0D1321;margin:0 0 12px;">Payment Receipt</h3>
+      <table style="width:100%;border-collapse:collapse;font-size:14px;color:#333;">
+        <tr><td style="padding:4px 0;color:#666;width:140px;">Receipt No.</td><td>${receiptNumber(receipt.paymentRef)}</td></tr>
+        <tr><td style="padding:4px 0;color:#666;">Date</td><td>${dateStr}</td></tr>
+        <tr><td style="padding:4px 0;color:#666;">Billed to</td><td>${email}</td></tr>
+        <tr><td style="padding:4px 0;color:#666;">Description</td><td>${description}</td></tr>
+        <tr><td style="padding:4px 0;color:#666;">Amount paid</td><td><b>${receipt.amount}</b></td></tr>
+        <tr><td style="padding:4px 0;color:#666;">Payment method</td><td>${receipt.method || 'Online payment'}</td></tr>
+        <tr><td style="padding:4px 0;color:#666;">Payment reference</td><td>${receipt.paymentRef || 'N/A'}</td></tr>
+        <tr><td style="padding:4px 0;color:#666;">Seller</td><td>${ASZUREX_BUSINESS_ADDRESS}${ASZUREX_GSTIN ? ` — GSTIN ${ASZUREX_GSTIN}` : ''}</td></tr>
+      </table>
+      ${receipt.receiptUrl ? `<p style="margin:12px 0 0;font-size:13px;"><a href="${receipt.receiptUrl}" style="color:#0EA5E9;">View the official receipt from our payment processor</a></p>` : ''}
+      ${!ASZUREX_GSTIN ? `<p style="margin:12px 0 0;font-size:12px;color:#999;">This is a payment receipt. AszureX is not currently registered for GST, so no separate tax invoice with GSTIN is issued.</p>` : ''}
+    </div>
+  `;
+}
+
+async function issueRenewalKey({ email, region, seats = 1, receipt = null }) {
   const issuedAt = new Date();
   // One seat (the shop PC) keeps the plain SARANG2 key; more seats need the SARANG3 key that carries the count.
   const licenseKey = seats > 1 ? generateSarangLicenseKeyV3('PAID', region, issuedAt, seats) : generateSarangLicenseKeyV2('PAID', region, issuedAt);
+  const description = `Sarang Business OS Lite — Annual License${seats > 1 ? ` (${seats} PCs)` : ''}`;
   await createTransporter().sendMail({
     from: `"AszureX" <${ZOHO_EMAIL}>`,
     to: email,
@@ -651,9 +773,10 @@ async function issueRenewalKey({ email, region, seats = 1 }) {
         <p>Your new license key is below — enter it in Sarang under Settings → License to keep everything working exactly as before.</p>
         <p style="font-family:monospace;font-size:16px;background:#f7f9fc;border-left:4px solid #0EA5E9;padding:12px 16px;border-radius:4px;">${licenseKey}</p>
       </div>
+      ${receiptHtml({ issuedAt, email, description, receipt })}
     `
   });
-  console.log(`✅ Renewal key issued and emailed — ${email} (${region}, ${seats} seat${seats === 1 ? '' : 's'})`);
+  console.log(`✅ Renewal key issued and emailed — ${email} (${region}, ${seats} seat${seats === 1 ? '' : 's'}${receipt ? ', receipt included' : ', NO receipt data on this event'})`);
   return licenseKey;
 }
 
@@ -690,7 +813,13 @@ app.post('/api/webhooks/razorpay', async (req, res) => {
       }
       // Extra PCs are sold as a payment link/order carrying notes.seats (total PCs, shop PC included).
       const notes = event.payload?.payment?.entity?.notes || event.payload?.payment_link?.entity?.notes || {};
-      await issueRenewalKey({ email, region: 'IN', seats: Number(notes.seats) || 1 });
+      const paymentEntity = event.payload?.payment?.entity;
+      const receipt = paymentEntity?.amount ? {
+        amount: `₹${(paymentEntity.amount / 100).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
+        method: paymentEntity.method ? paymentEntity.method.toUpperCase() : 'Razorpay',
+        paymentRef: paymentEntity.id
+      } : null;
+      await issueRenewalKey({ email, region: 'IN', seats: Number(notes.seats) || 1, receipt });
     }
 
     return res.status(200).json({ success: true });
@@ -730,7 +859,19 @@ app.post('/api/webhooks/lemonsqueezy', async (req, res) => {
         return res.status(200).json({ success: true });
       }
       const custom = event.meta?.custom_data || {};
-      await issueRenewalKey({ email, region: 'INTL', seats: Number(custom.seats) || 1 });
+      // Lemon Squeezy is merchant of record and already emails its own official receipt/invoice
+      // to the buyer, so this is a best-effort supplementary summary, not a replacement for it —
+      // exact field names below are our best understanding of the LS webhook payload and are
+      // deliberately optional-chained: if the shape differs, we simply omit this block rather
+      // than show wrong or blank data (see receiptHtml()'s !receipt.amount guard).
+      const lsAttrs = event.data?.attributes;
+      const receipt = lsAttrs?.total_formatted ? {
+        amount: lsAttrs.total_formatted,
+        method: 'Lemon Squeezy',
+        paymentRef: lsAttrs.order_number || event.data?.id,
+        receiptUrl: lsAttrs.urls?.receipt || lsAttrs.receipt_url || null
+      } : null;
+      await issueRenewalKey({ email, region: 'INTL', seats: Number(custom.seats) || 1, receipt });
     }
 
     return res.status(200).json({ success: true });

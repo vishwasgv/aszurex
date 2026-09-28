@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Add extra PC seats to your Sarang Business OS Lite multi-user license.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://aszurex.com/sarang-add-seats.html">
+<link rel="icon" href="/favicon.png" type="image/png" sizes="any">
+<link rel="icon" href="/aszurex-logo.png" type="image/png" sizes="512x512">
+<meta name="theme-color" content="#06090F">
+<title>Add Seats | Sarang | AszureX</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="css/style.css">
+<noscript><style>.reveal{opacity:1 !important;transform:none !important;transition:none !important;}</style></noscript>
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="container">
+      <a href="/" class="logo" aria-label="AszureX Home">
+        <img src="/aszurex-logo.png" alt="AszureX" class="logo-icon-img">
+        <div class="logo-wordmark">
+          <span class="logo-text">AszureX</span>
+          <span class="logo-tagline">Trust Beyond Limits...</span>
+        </div>
+      </a>
+      <button class="hamburger" aria-label="Toggle menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-menu">
+        <li><a href="/">Home</a></li>
+        <li><a href="/sarang.html">Sarang</a></li>
+        <li><a href="/contact.html">Contact</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <section class="page-header">
+    <div class="container">
+      <div class="page-header-inner">
+        <p class="page-eyebrow">Sarang Business OS Lite — Multi-user</p>
+        <h1 class="page-h1">Add PC seats</h1>
+        <p class="page-sub">Your base license covers your shop PC (1 seat). If you turn on multi-user and want more PCs signed in at the same time, buy extra seats here — they run for the same period as your main license.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="contact-section">
+    <div class="container" style="max-width:560px;">
+      <div style="line-height:1.75;">
+
+        <div style="background:var(--card-dark);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:28px;">
+          <label for="seat-count" style="display:block;color:var(--text-faint);font-size:0.85rem;margin-bottom:8px;">Total PCs signed in at once (including your shop PC)</label>
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;">
+            <button type="button" id="seat-minus" aria-label="Fewer seats" style="width:40px;height:40px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:#1E293B;color:#fff;font-size:1.2rem;cursor:pointer;">−</button>
+            <input id="seat-count" type="number" min="2" max="20" value="2" readonly style="width:70px;text-align:center;font-size:1.5rem;font-weight:700;background:none;border:none;color:#fff;">
+            <button type="button" id="seat-plus" aria-label="More seats" style="width:40px;height:40px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:#1E293B;color:#fff;font-size:1.2rem;cursor:pointer;">+</button>
+            <span style="color:var(--text-faint2);font-size:0.85rem;">= 1 shop PC + <span id="extra-count">1</span> extra</span>
+          </div>
+
+          <div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:16px;margin-bottom:20px;">
+            <p style="color:var(--text-faint);font-size:0.85rem;margin:0 0 4px;">Estimated price (India)</p>
+            <p style="color:#fff;font-size:1.6rem;font-weight:700;margin:0 0 10px;" id="price-in">₹9,998<span style="font-size:0.9rem;color:var(--text-faint);">/year</span></p>
+            <p style="color:var(--text-faint);font-size:0.85rem;margin:0 0 4px;">Estimated price (International)</p>
+            <p style="color:#fff;font-size:1.6rem;font-weight:700;margin:0;" id="price-intl">$208<span style="font-size:0.9rem;color:var(--text-faint);">/year</span></p>
+          </div>
+          <p style="color:var(--text-faint2);font-size:0.75rem;margin:0 0 20px;">These are indicative prices (base license + extra seats at a per-seat rate) — the final amount is confirmed with you before you pay. Extra seats run for the remainder of your current license period, so your first payment may be prorated.</p>
+
+          <label for="seat-email" style="display:block;color:var(--text-faint);font-size:0.85rem;margin-bottom:8px;">Your email (the one your Sarang license is under)</label>
+          <input id="seat-email" type="email" required placeholder="you@business.com" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:#1E293B;color:#fff;margin-bottom:20px;">
+
+          <label for="seat-region" style="display:block;color:var(--text-faint);font-size:0.85rem;margin-bottom:8px;">Paying from</label>
+          <select id="seat-region" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:#1E293B;color:#fff;margin-bottom:20px;">
+            <option value="IN">India (₹, via Razorpay)</option>
+            <option value="INTL">Outside India ($, via Lemon Squeezy)</option>
+          </select>
+
+          <button type="button" id="seat-request-btn" class="btn btn-accent" style="width:100%;">Request payment link for these seats</button>
+          <p id="seat-request-msg" style="color:var(--text-faint2);font-size:0.8rem;margin:12px 0 0;display:none;"></p>
+        </div>
+
+        <p style="color:var(--text-faint2);font-size:0.8rem;margin-top:20px;">Already have a payment link from us for this? Use the link in our email instead — no need to request another one.</p>
+        <p style="color:var(--text-faint2);font-size:0.8rem;">See our <a href="/sarang-terms.html" style="color:#0EA5E9;">Terms</a> (section 3, PCs and seats) and <a href="/sarang-refund.html" style="color:#0EA5E9;">Refund Policy</a> for how seats work.</p>
+
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-bottom">
+        <p class="footer-copy">&copy; 2026 AszureX. All rights reserved. <a href="/privacy.html" style="color:inherit;text-decoration:underline;">Privacy Policy</a> · <a href="/terms.html" style="color:inherit;text-decoration:underline;">Terms of Use</a></p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/config.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    // Indicative pricing only — the base-license price is the real one shown on the pricing
+    // section; PER_SEAT_* below are AszureX's suggested starting rates (not yet finalised)
+    // for an additional seat, roughly 40% of the base license. Update once confirmed.
+    const BASE_IN = 6999, BASE_INTL = 149;
+    const PER_SEAT_IN = 2999, PER_SEAT_INTL = 59;
+    const seatInput = document.getElementById('seat-count');
+    const extraCount = document.getElementById('extra-count');
+    const priceIn = document.getElementById('price-in');
+    const priceIntl = document.getElementById('price-intl');
+
+    function render() {
+      const total = parseInt(seatInput.value, 10);
+      const extra = total - 1;
+      extraCount.textContent = extra;
+      priceIn.innerHTML = `₹${(BASE_IN + extra * PER_SEAT_IN).toLocaleString('en-IN')}<span style="font-size:0.9rem;color:var(--text-faint);">/year</span>`;
+      priceIntl.innerHTML = `$${BASE_INTL + extra * PER_SEAT_INTL}<span style="font-size:0.9rem;color:var(--text-faint);">/year</span>`;
+    }
+    document.getElementById('seat-minus').addEventListener('click', () => {
+      seatInput.value = Math.max(2, parseInt(seatInput.value, 10) - 1);
+      render();
+    });
+    document.getElementById('seat-plus').addEventListener('click', () => {
+      seatInput.value = Math.min(20, parseInt(seatInput.value, 10) + 1);
+      render();
+    });
+    render();
+
+    document.getElementById('seat-request-btn').addEventListener('click', async () => {
+      const btn = document.getElementById('seat-request-btn');
+      const msg = document.getElementById('seat-request-msg');
+      const email = document.getElementById('seat-email').value.trim();
+      const region = document.getElementById('seat-region').value;
+      const seats = parseInt(seatInput.value, 10);
+      msg.style.display = 'none';
+      if (!email || !email.includes('@')) {
+        msg.textContent = 'Please enter a valid email address.';
+        msg.style.color = 'var(--danger)';
+        msg.style.display = 'block';
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = 'Please wait…';
+      try {
+        const res = await fetch('/api/sarang-seat-checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, seats, region })
+        });
+        const data = await res.json();
+        if (data.paymentUrl) {
+          window.location.href = data.paymentUrl;
+          return;
+        }
+        msg.textContent = data.message || 'Thanks — we\'ll email you a payment link for these seats shortly.';
+        msg.style.color = 'var(--text-faint2)';
+        msg.style.display = 'block';
+      } catch (e) {
+        msg.textContent = 'Something went wrong. Please email contact@aszurex.com with how many seats you need instead.';
+        msg.style.color = 'var(--danger)';
+        msg.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Request payment link for these seats';
+      }
+    });
+  </script>
+</body>
+</html>
