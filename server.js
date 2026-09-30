@@ -26,7 +26,7 @@ if (!ZOHO_EMAIL || !ZOHO_PASSWORD || !TO_EMAIL) {
 // LICENSE_HMAC_SECRET) — this is what lets the app verify a key this server
 // issues. Generate a strong random value once (e.g. `openssl rand -hex 32`)
 // and set it identically in both places; never commit the real value to git.
-const SARANG_LICENSE_HMAC_SECRET = process.env.SARANG_LICENSE_HMAC_SECRET || 'DEV-ONLY-INSECURE-PLACEHOLDER-DO-NOT-SHIP';
+const SARANG_LICENSE_HMAC_SECRET = process.env.SARANG_LICENSE_HMAC_SECRET || '';
 // Optional — a Google Apps Script Web App URL (see PHASE_59 doc, 59.1) that
 // appends a row to a Google Sheet. Lead capture still works (emails still
 // send) without this set; it just means submissions aren't also logged to
@@ -66,8 +66,16 @@ const SARANG_SEAT_REQUEST_SHEET_WEBHOOK_URL = process.env.SARANG_SEAT_REQUEST_SH
 let SARANG_SEAT_PAYMENT_LINKS = {};
 try { SARANG_SEAT_PAYMENT_LINKS = JSON.parse(process.env.SARANG_SEAT_PAYMENT_LINKS_JSON || '{}'); }
 catch { console.error('❌ SARANG_SEAT_PAYMENT_LINKS_JSON is not valid JSON — ignoring it, falling back to email requests for all seat counts.'); }
-if (!process.env.SARANG_LICENSE_HMAC_SECRET) {
-  console.error('❌ SARANG_LICENSE_HMAC_SECRET not set — using an insecure dev placeholder. Set this before going live.');
+// Fail closed (2026-09-30, founder's explicit decision) — matches the RAZORPAY_WEBHOOK_SECRET/
+// LEMON_SQUEEZY_WEBHOOK_SECRET "refuse to run insecure" posture below. This secret signs every
+// SARANG-format license key, kill-switch token, and revocation token this server issues; running
+// on the old hardcoded placeholder meant anyone who read this file (or the public GitHub repo's
+// history) could forge a valid-looking license key offline. No NODE_ENV/dev-mode distinction
+// exists anywhere else in this file, so this doesn't invent one — it fails closed unconditionally,
+// the same as production would. For real local dev, set a throwaway value in a local .env instead.
+if (!SARANG_LICENSE_HMAC_SECRET) {
+  console.error('❌ FATAL: SARANG_LICENSE_HMAC_SECRET not set. Refusing to start rather than run on an insecure placeholder.');
+  process.exit(1);
 }
 // Set once the founder's Razorpay/Lemon Squeezy accounts are approved —
 // found in each provider's dashboard under Webhooks. Until set, the
@@ -75,14 +83,43 @@ if (!process.env.SARANG_LICENSE_HMAC_SECRET) {
 // open — see the checks inside each handler).
 const RAZORPAY_WEBHOOK_SECRET = process.env.RAZORPAY_WEBHOOK_SECRET || '';
 const LEMON_SQUEEZY_WEBHOOK_SECRET = process.env.LEMON_SQUEEZY_WEBHOOK_SECRET || '';
+
+// ── Payment-provider webhook-adapter ceiling (2026-09-30) ──
+// Every new payment provider needs its own hand-written webhook route here (signature
+// verification, event-shape parsing, the works) — that's fine for a couple of providers, but it
+// doesn't scale as a strategy. List every known webhook-secret env var name here (add to this
+// array, not just a new `const`, whenever a new provider is wired up) so this check actually sees
+// it. If more than 5 are ever configured at once, refuse to start: past that point, a real
+// checkout-API integration (one that handles many payment methods/providers itself) should
+// replace another hand-made Payment Link adapter, not extend this list further.
+const SARANG_WEBHOOK_SECRET_ENV_VARS = ['RAZORPAY_WEBHOOK_SECRET', 'LEMON_SQUEEZY_WEBHOOK_SECRET'];
+const SARANG_WEBHOOK_SECRET_CEILING = 5;
+const configuredWebhookSecretCount = SARANG_WEBHOOK_SECRET_ENV_VARS.filter(name => !!process.env[name]).length;
+if (configuredWebhookSecretCount > SARANG_WEBHOOK_SECRET_CEILING) {
+  console.error(
+    `❌ FATAL: ${configuredWebhookSecretCount} payment-provider webhook secrets are configured ` +
+    `(ceiling is ${SARANG_WEBHOOK_SECRET_CEILING}). This is a deliberate limit, not an oversight — ` +
+    `past ${SARANG_WEBHOOK_SECRET_CEILING} manually-managed payment-provider webhook adapters, a real ` +
+    `checkout-API integration should replace hand-made Payment Links, not one more adapter bolted onto ` +
+    `this file. Refusing to start.`
+  );
+  process.exit(1);
+}
 // 2026-09-02 — Ed25519 private key for SARANG2 keys, base64-wrapped PKCS8 PEM
 // (avoids Render env-UI newline mangling). Never the same value as anything
 // shipped client-side. Decoded once at startup.
 const SARANG_LICENSE_ED25519_PRIVATE_KEY = process.env.SARANG_LICENSE_ED25519_PRIVATE_KEY_B64
   ? Buffer.from(process.env.SARANG_LICENSE_ED25519_PRIVATE_KEY_B64, 'base64').toString('utf8')
   : '';
+// Fail closed (2026-09-30, founder's explicit decision) — same posture as the HMAC secret above
+// and the webhook secrets below: this key signs every SARANG2/SARANG3 license key this server
+// issues, so silently limping along without it (the old behavior — just a console.error, server
+// kept running) meant every paid/trial key issuance would 500 at request time instead of failing
+// obviously at boot. No NODE_ENV/dev-mode distinction exists elsewhere in this file, so this
+// doesn't invent one — it fails closed unconditionally.
 if (!SARANG_LICENSE_ED25519_PRIVATE_KEY) {
-  console.error('❌ SARANG_LICENSE_ED25519_PRIVATE_KEY_B64 not set — SARANG2 key issuance will fail until this is set.');
+  console.error('❌ FATAL: SARANG_LICENSE_ED25519_PRIVATE_KEY_B64 not set. Refusing to start — SARANG2/SARANG3 key issuance would fail on every request without it.');
+  process.exit(1);
 }
 // 2026-09-02 hardening — remote kill switch (59.6). A single GLOBAL flag,
 // not per-customer: the founder flips this in the Render dashboard (env var
@@ -120,6 +157,19 @@ createTransporter().verify((error) => {
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Render puts exactly one reverse proxy hop in front of this service, which
+// sets X-Forwarded-For to the real client IP. Without this, every per-IP
+// rate limiter below is trivially bypassable: `req.headers['x-forwarded-for']`
+// is attacker-controlled input (nothing stops a caller from sending their
+// own X-Forwarded-For header directly), and naively reading it — as this
+// file used to, via `.split(',')[0]` — trusts whatever the client claims.
+// `trust proxy = 1` makes Express's own `req.ip` instead read the address
+// added by the one hop we actually trust (Render's edge), which a client
+// cannot forge by sending its own header. If Render's proxy chain is ever
+// more than one hop deep, this number needs to change accordingly — worth
+// confirming against Render's own docs/dashboard for this service.
+app.set('trust proxy', 1);
+
 // ── Middleware ─────────────────────────────────────────────
 app.use(cors());
 // `verify` captures the raw, unparsed body onto req.rawBody — required for
@@ -147,6 +197,24 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 }
 });
 
+// ── HTML-escaping for user-supplied text embedded in emails ─
+// Every email built below interpolates raw form input (name/email/message/
+// etc.) straight into an HTML string. Unescaped, a submitter can inject
+// arbitrary markup into an email a real person (the founder, or a customer)
+// opens — broken layout, hidden links/phishing content, spoofed-looking
+// blocks — and /api/contact and /api/apply never validated the email field's
+// shape at all, so that field was wide open. Escape on the way into HTML,
+// never on the way in, so the underlying data (e.g. what's sent to a Sheet)
+// stays exactly what the submitter typed.
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // ── Contact form ───────────────────────────────────────────
 app.post('/api/contact', async (req, res) => {
   try {
@@ -155,6 +223,11 @@ app.post('/api/contact', async (req, res) => {
     if (!name || !email || !message) {
       return res.status(400).json({ success: false, message: 'Please fill in all required fields.' });
     }
+
+    const safeName = escapeHtml(name);
+    const safeEmail = escapeHtml(email);
+    const safeCompany = escapeHtml(company);
+    const safeMessage = escapeHtml(message).replace(/\n/g, '<br>');
 
     const type    = enquiryType || 'General Enquiry';
     const subject = type === 'Delivery Partnership'
@@ -167,23 +240,23 @@ app.post('/api/contact', async (req, res) => {
           New Delivery Partnership Enquiry
         </h2>
         <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
-          <tr><td style="padding:8px 0;color:#666;width:120px;"><b>Name</b></td><td>${name}</td></tr>
-          <tr><td style="padding:8px 0;color:#666;"><b>Company</b></td><td>${company || 'Not provided'}</td></tr>
-          <tr><td style="padding:8px 0;color:#666;"><b>Email</b></td><td><a href="mailto:${email}">${email}</a></td></tr>
+          <tr><td style="padding:8px 0;color:#666;width:120px;"><b>Name</b></td><td>${safeName}</td></tr>
+          <tr><td style="padding:8px 0;color:#666;"><b>Company</b></td><td>${safeCompany || 'Not provided'}</td></tr>
+          <tr><td style="padding:8px 0;color:#666;"><b>Email</b></td><td><a href="mailto:${safeEmail}">${safeEmail}</a></td></tr>
         </table>
         <p style="color:#666;margin-bottom:8px;"><b>Message:</b></p>
         <div style="background:#f7f9fc;border-left:4px solid #0EA5E9;padding:16px;border-radius:4px;line-height:1.7;">
-          ${message.replace(/\n/g, '<br>')}
+          ${safeMessage}
         </div>
       </div>
     ` : `
       <div style="font-family:Arial,sans-serif;max-width:600px;">
         <h3 style="color:#0D1321;">New Contact Form Submission</h3>
-        <p><b>Name:</b> ${name}</p>
-        <p><b>Email:</b> ${email}</p>
-        <p><b>Company:</b> ${company || 'N/A'}</p>
-        <p><b>Enquiry Type:</b> ${type}</p>
-        <p><b>Message:</b><br>${message.replace(/\n/g, '<br>')}</p>
+        <p><b>Name:</b> ${safeName}</p>
+        <p><b>Email:</b> ${safeEmail}</p>
+        <p><b>Company:</b> ${safeCompany || 'N/A'}</p>
+        <p><b>Enquiry Type:</b> ${escapeHtml(type)}</p>
+        <p><b>Message:</b><br>${safeMessage}</p>
       </div>
     `;
 
@@ -220,13 +293,13 @@ app.post('/api/apply', upload.single('resume'), async (req, res) => {
       subject: `Job Application: ${position}`,
       html: `
         <h2>New Job Application</h2>
-        <p><strong>Position:</strong> ${position}</p>
-        <p><strong>Name:</strong> ${name}</p>
-        <p><strong>Email:</strong> ${email}</p>
-        <p><strong>Phone:</strong> ${phone}</p>
-        <p><strong>Experience:</strong> ${experience}</p>
+        <p><strong>Position:</strong> ${escapeHtml(position)}</p>
+        <p><strong>Name:</strong> ${escapeHtml(name)}</p>
+        <p><strong>Email:</strong> ${escapeHtml(email)}</p>
+        <p><strong>Phone:</strong> ${escapeHtml(phone)}</p>
+        <p><strong>Experience:</strong> ${escapeHtml(experience)}</p>
         <p><strong>Cover Letter:</strong></p>
-        <p>${coverLetter || 'N/A'}</p>
+        <p>${escapeHtml(coverLetter) || 'N/A'}</p>
       `,
       attachments: resume ? [{
         content:     fs.readFileSync(resume.path).toString('base64'),
@@ -247,12 +320,154 @@ app.post('/api/apply', upload.single('resume'), async (req, res) => {
   }
 });
 
-// ── Sarang: add-seats request (U5, 2026-09-29) ──────────────
-// If SARANG_SEAT_PAYMENT_LINKS_JSON has a real Payment Link for this exact seat count and
-// region, send the customer straight there. Otherwise — which is every request today, since
-// no real per-tier links exist yet — email AszureX so the founder can create the right-amount
-// Razorpay Payment Link or Lemon Squeezy checkout by hand and send it on; this keeps the page
-// genuinely usable before that automation exists, not just decorative.
+// ── Sarang: add-seats request (U5, 2026-09-29; dynamic checkout added 2026-09-30) ──
+// Three-step fallback, in order: (1) a ready-made static Payment Link for this exact seat
+// count/region (SARANG_SEAT_PAYMENT_LINKS_JSON) — send the customer straight there. (2) no static
+// link — try creating a real, one-time Payment Link/Checkout via the provider's API for the exact
+// computed amount (createRazorpaySeatPaymentLink/createLemonSqueezySeatCheckout below) — this is
+// what makes any seat count 2-20 fully self-serve with zero AszureX involvement. (3) that also
+// isn't available/fails — email AszureX so the founder can create the right-amount Payment
+// Link/checkout by hand, exactly as this route has always done. Step (2) is a no-op (returns null
+// immediately, no network call) until the founder adds its env vars to Render — see the comment
+// above createRazorpaySeatPaymentLink — so until then this route's behavior is byte-for-byte
+// identical to before step (2) existed.
+
+// Pricing — MUST stay numerically identical to public/sarang-add-seats.html's <script> block
+// (BASE_IN/PER_SEAT_IN/BASE_INTL/PER_SEAT_INTL), which is what actually renders the price the
+// customer sees before clicking through to checkout. Confirmed final pricing (2026-09-30): ₹6,999
+// / $149 base (1 PC), ₹2,999 / $59 per additional seat.
+const SARANG_SEAT_BASE_IN = 6999;
+const SARANG_SEAT_PER_SEAT_IN = 2999;
+const SARANG_SEAT_BASE_INTL = 149;
+const SARANG_SEAT_PER_SEAT_INTL = 59;
+function computeSarangSeatTotal(seatCount, region) {
+  const extra = seatCount - 1;
+  return region === 'IN'
+    ? SARANG_SEAT_BASE_IN + extra * SARANG_SEAT_PER_SEAT_IN
+    : SARANG_SEAT_BASE_INTL + extra * SARANG_SEAT_PER_SEAT_INTL;
+}
+
+// ── Dynamic self-serve seat checkout (2026-09-30) — NOT YET CONFIGURED IN PRODUCTION ──
+// None of the five env vars below exist on Render yet. Until the founder adds them, both
+// createRazorpaySeatPaymentLink() and createLemonSqueezySeatCheckout() return null immediately —
+// no network call is made — so /api/sarang-seat-checkout keeps behaving exactly as it does today.
+//   RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET — Razorpay Dashboard → Settings → API Keys → Generate
+//     Key. NOT the same value as RAZORPAY_WEBHOOK_SECRET above — that one verifies inbound
+//     webhooks, these authenticate outbound calls that CREATE Payment Links.
+//   LEMONSQUEEZY_API_KEY — Lemon Squeezy Dashboard → Settings → API → Create API key.
+//   LEMONSQUEEZY_STORE_ID — Lemon Squeezy Dashboard → Settings → Stores (the numeric store id
+//     shown there).
+//   LEMONSQUEEZY_VARIANT_ID — the id of a single "Sarang extra seats" product variant, created
+//     once by hand in the Lemon Squeezy dashboard with its pricing model set to "Pay what you
+//     want" (minimum price can be $0 or $149 — it's just a floor). This is load-bearing: Lemon
+//     Squeezy's Checkouts API only honors the custom_price override below when the target variant
+//     is actually configured for PWYW pricing. On an ordinary fixed-price variant, custom_price is
+//     silently ignored by Lemon Squeezy and the customer is charged that variant's own fixed
+//     price instead of the seat-count-based total shown on the page — Lemon Squeezy gives no error
+//     for this, so it must be verified once in Lemon Squeezy TEST mode (a $0 test transaction)
+//     before this is trusted for a real sale. This is a genuine architectural difference from the
+//     Razorpay side: Razorpay Payment Links take an arbitrary amount directly; Lemon Squeezy
+//     checkouts are always created against a pre-configured variant, and only a PWYW-priced
+//     variant lets that variant's effective price be overridden per request.
+const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID || '';
+const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || '';
+const LEMONSQUEEZY_API_KEY = process.env.LEMONSQUEEZY_API_KEY || '';
+const LEMONSQUEEZY_STORE_ID = process.env.LEMONSQUEEZY_STORE_ID || '';
+const LEMONSQUEEZY_VARIANT_ID = process.env.LEMONSQUEEZY_VARIANT_ID || '';
+
+// Creates a real, one-time-use Razorpay Payment Link for the exact computed amount and returns
+// its URL — or null if RAZORPAY_KEY_ID/RAZORPAY_KEY_SECRET aren't configured yet, or if the API
+// call fails for any reason (network, bad credentials, rate limit, ...). Callers must treat null
+// exactly like "no static link either" and fall through to the existing email-the-founder path —
+// a failed automated attempt must never be worse than today's manual fallback, and must never
+// 500 the customer's request.
+//
+// No partner ref: sarang-add-seats.html has no ?ref= capture today (unlike sarang.html's
+// captureSarangReferral()), so there is no known partner code to attach at checkout time for this
+// route. notes.ref is intentionally left unset here — partner attribution for extra-seat sales
+// stays a manual, founder-created Payment Link for now, matching current scope.
+async function createRazorpaySeatPaymentLink(seatCount, email) {
+  if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) return null;
+  try {
+    const amountRupees = computeSarangSeatTotal(seatCount, 'IN');
+    const auth = Buffer.from(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`).toString('base64');
+    const resp = await fetch('https://api.razorpay.com/v1/payment_links', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Basic ${auth}` },
+      body: JSON.stringify({
+        amount: amountRupees * 100, // Razorpay wants paise, not rupees
+        currency: 'INR',
+        description: `Sarang Business OS Lite — ${seatCount} PCs (annual license)`,
+        customer: { email },
+        notify: { email: true, sms: false },
+        reminder_enable: true,
+        notes: { seats: String(seatCount) } // read back by /api/webhooks/razorpay's issueRenewalKey() call
+      }),
+      signal: AbortSignal.timeout(10000)
+    });
+    if (!resp.ok) {
+      console.error('❌ Razorpay Payment Link creation failed:', resp.status, (await resp.text().catch(() => '')).slice(0, 300));
+      return null;
+    }
+    const data = await resp.json();
+    return data?.short_url || null;
+  } catch (error) {
+    console.error('❌ Razorpay Payment Link creation error (falling back to email):', error.message);
+    return null;
+  }
+}
+
+// Creates a real, one-time-use Lemon Squeezy Checkout for the exact computed amount, via the
+// custom_price override on the single PWYW-configured LEMONSQUEEZY_VARIANT_ID (see the env-var
+// comment above — this only actually charges the right amount if that variant is genuinely
+// configured for "Pay what you want" pricing on the Lemon Squeezy side). Returns the checkout
+// URL, or null on any missing config/failure so the caller falls through to the email fallback,
+// same contract as the Razorpay function above.
+async function createLemonSqueezySeatCheckout(seatCount, email) {
+  if (!LEMONSQUEEZY_API_KEY || !LEMONSQUEEZY_STORE_ID || !LEMONSQUEEZY_VARIANT_ID) return null;
+  try {
+    const amountDollars = computeSarangSeatTotal(seatCount, 'INTL');
+    const resp = await fetch('https://api.lemonsqueezy.com/v1/checkouts', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/vnd.api+json',
+        'Accept': 'application/vnd.api+json',
+        'Authorization': `Bearer ${LEMONSQUEEZY_API_KEY}`
+      },
+      body: JSON.stringify({
+        data: {
+          type: 'checkouts',
+          attributes: {
+            custom_price: amountDollars * 100, // cents; only honored on a PWYW-priced variant, see comment above
+            product_options: {
+              name: `Sarang Business OS Lite — ${seatCount} PCs (annual license)`,
+              description: `Annual license covering ${seatCount} PCs signed in at once.`
+            },
+            checkout_data: {
+              email,
+              custom: { seats: String(seatCount) } // read back by /api/webhooks/lemonsqueezy's issueRenewalKey() call
+            }
+          },
+          relationships: {
+            store: { data: { type: 'stores', id: String(LEMONSQUEEZY_STORE_ID) } },
+            variant: { data: { type: 'variants', id: String(LEMONSQUEEZY_VARIANT_ID) } }
+          }
+        }
+      }),
+      signal: AbortSignal.timeout(10000)
+    });
+    if (!resp.ok) {
+      console.error('❌ Lemon Squeezy checkout creation failed:', resp.status, (await resp.text().catch(() => '')).slice(0, 300));
+      return null;
+    }
+    const data = await resp.json();
+    return data?.data?.attributes?.url || null;
+  } catch (error) {
+    console.error('❌ Lemon Squeezy checkout creation error (falling back to email):', error.message);
+    return null;
+  }
+}
+
 const sarangSeatRequestHits = new Map(); // ip -> [timestamps]
 function isSeatRequestRateLimited(ip) {
   const now = Date.now();
@@ -264,7 +479,7 @@ function isSeatRequestRateLimited(ip) {
 
 app.post('/api/sarang-seat-checkout', async (req, res) => {
   try {
-    const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown';
+    const ip = req.ip || 'unknown'; // trust-proxy-aware (see app.set('trust proxy', 1) above) — not attacker-forgeable
     if (isSeatRequestRateLimited(ip)) {
       return res.status(429).json({ success: false, message: 'Too many requests. Please try again later.' });
     }
@@ -286,7 +501,19 @@ app.post('/api/sarang-seat-checkout', async (req, res) => {
       return res.json({ success: true, paymentUrl });
     }
 
-    // No link for this tier yet — notify AszureX to follow up by hand.
+    // No static link — try creating a real one-time Payment Link/Checkout via the provider's API.
+    // No-ops (returns null, no network call) until the founder configures the relevant env vars;
+    // also falls through to the email path below on any live failure — see the two functions'
+    // own comments above for the full contract.
+    const dynamicPaymentUrl = seatRegion === 'IN'
+      ? await createRazorpaySeatPaymentLink(seatCount, email)
+      : await createLemonSqueezySeatCheckout(seatCount, email);
+    if (dynamicPaymentUrl) {
+      console.log(`✅ Seat-checkout: dynamic Payment Link created — ${email}, ${seatCount} seats, ${seatRegion}`);
+      return res.json({ success: true, paymentUrl: dynamicPaymentUrl });
+    }
+
+    // No link for this tier yet (static or dynamic) — notify AszureX to follow up by hand.
     const submittedAt = new Date().toISOString();
     if (SARANG_SEAT_REQUEST_SHEET_WEBHOOK_URL) {
       fetch(SARANG_SEAT_REQUEST_SHEET_WEBHOOK_URL, {
@@ -303,7 +530,7 @@ app.post('/api/sarang-seat-checkout', async (req, res) => {
       html: `
         <div style="font-family:Arial,sans-serif;max-width:600px;">
           <h3 style="color:#0D1321;">New add-seats request</h3>
-          <p><b>Email:</b> ${email}</p>
+          <p><b>Email:</b> ${escapeHtml(email)}</p>
           <p><b>Total PCs wanted:</b> ${seatCount} (${seatCount - 1} extra)</p>
           <p><b>Region:</b> ${seatRegion === 'IN' ? 'India (Razorpay)' : 'International (Lemon Squeezy)'}</p>
           <p style="color:#666;font-size:13px;">Create a Payment Link/checkout for this seat count with notes.seats=${seatCount} (Razorpay) or custom_data.seats=${seatCount} (Lemon Squeezy) and send it to the customer; the renewal webhook already knows how to read that field.</p>
@@ -334,7 +561,7 @@ function suggestPartnerCode(businessName) {
 
 app.post('/api/partner-signup', async (req, res) => {
   try {
-    const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown';
+    const ip = req.ip || 'unknown'; // trust-proxy-aware (see app.set('trust proxy', 1) above) — not attacker-forgeable
     if (isRateLimited(ip)) {
       return res.status(429).json({ success: false, message: 'Too many requests. Please try again later.' });
     }
@@ -370,16 +597,16 @@ app.post('/api/partner-signup', async (req, res) => {
         <div style="font-family:Arial,sans-serif;max-width:600px;">
           <h3 style="color:#0D1321;">New Sarang partner application</h3>
           <table style="width:100%;border-collapse:collapse;">
-            <tr><td style="padding:6px 0;color:#666;width:140px;"><b>Name</b></td><td>${name}</td></tr>
-            <tr><td style="padding:6px 0;color:#666;"><b>Email</b></td><td><a href="mailto:${email}">${email}</a></td></tr>
-            <tr><td style="padding:6px 0;color:#666;"><b>Phone</b></td><td>${phone}</td></tr>
-            <tr><td style="padding:6px 0;color:#666;"><b>Business</b></td><td>${businessName}</td></tr>
-            <tr><td style="padding:6px 0;color:#666;"><b>City</b></td><td>${city}</td></tr>
-            <tr><td style="padding:6px 0;color:#666;"><b>PAN</b></td><td>${pan || 'Not given'}</td></tr>
-            <tr><td style="padding:6px 0;color:#666;"><b>GSTIN</b></td><td>${gstin || 'Not given'}</td></tr>
+            <tr><td style="padding:6px 0;color:#666;width:140px;"><b>Name</b></td><td>${escapeHtml(name)}</td></tr>
+            <tr><td style="padding:6px 0;color:#666;"><b>Email</b></td><td><a href="mailto:${escapeHtml(email)}">${escapeHtml(email)}</a></td></tr>
+            <tr><td style="padding:6px 0;color:#666;"><b>Phone</b></td><td>${escapeHtml(phone)}</td></tr>
+            <tr><td style="padding:6px 0;color:#666;"><b>Business</b></td><td>${escapeHtml(businessName)}</td></tr>
+            <tr><td style="padding:6px 0;color:#666;"><b>City</b></td><td>${escapeHtml(city)}</td></tr>
+            <tr><td style="padding:6px 0;color:#666;"><b>PAN</b></td><td>${escapeHtml(pan) || 'Not given'}</td></tr>
+            <tr><td style="padding:6px 0;color:#666;"><b>GSTIN</b></td><td>${escapeHtml(gstin) || 'Not given'}</td></tr>
             <tr><td style="padding:6px 0;color:#666;"><b>Suggested code</b></td><td><b>${suggestedCode}</b> (edit if you like before using it)</td></tr>
           </table>
-          ${notes ? `<p style="color:#666;margin-top:12px;"><b>How they plan to refer:</b><br>${String(notes).replace(/\n/g, '<br>')}</p>` : ''}
+          ${notes ? `<p style="color:#666;margin-top:12px;"><b>How they plan to refer:</b><br>${escapeHtml(notes).replace(/\n/g, '<br>')}</p>` : ''}
           <p style="color:#666;font-size:13px;margin-top:16px;">To accept: reply to this email, then send them a partner link like https://aszurex.com/sarang.html?ref=${suggestedCode} and, when you create their Payment Link, set notes.ref=${suggestedCode} (Razorpay) or checkout[custom][ref]=${suggestedCode} in their Lemon Squeezy checkout URL — commission then logs itself automatically.</p>
         </div>
       `
@@ -521,7 +748,7 @@ const SARANG_EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // ── Sarang: lead capture + key issuance (Phase 59.1/59.2) ───
 app.post('/api/sarang-download', async (req, res) => {
   try {
-    const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown';
+    const ip = req.ip || 'unknown'; // trust-proxy-aware (see app.set('trust proxy', 1) above) — not attacker-forgeable
     if (isRateLimited(ip)) {
       return res.status(429).json({ success: false, message: 'Too many requests. Please try again later.' });
     }
@@ -620,7 +847,7 @@ const SARANG_USAGE_MAX_ENTRIES_PER_REQUEST = 200; // defensive cap, well above a
 
 app.post('/api/sarang-usage', async (req, res) => {
   try {
-    const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown';
+    const ip = req.ip || 'unknown'; // trust-proxy-aware (see app.set('trust proxy', 1) above) — not attacker-forgeable
     if (isUsageRateLimited(ip)) {
       return res.status(429).json({ success: false, message: 'Too many requests.' });
     }
@@ -701,7 +928,7 @@ const SARANG_SUGGESTION_MAX_LENGTH = 4000; // generous but bounded — defends a
 
 app.post('/api/sarang-suggestion', async (req, res) => {
   try {
-    const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown';
+    const ip = req.ip || 'unknown'; // trust-proxy-aware (see app.set('trust proxy', 1) above) — not attacker-forgeable
     if (isSuggestionRateLimited(ip)) {
       return res.status(429).json({ success: false, message: 'Too many requests.' });
     }
@@ -728,8 +955,8 @@ app.post('/api/sarang-suggestion', async (req, res) => {
       html: `
         <div style="font-family:Arial,sans-serif;max-width:600px;">
           <h3 style="color:#0D1321;">New Sarang Suggestion</h3>
-          ${email ? `<p><b>From:</b> ${email}</p>` : '<p><b>From:</b> (not provided)</p>'}
-          <p><b>Message:</b><br>${message.replace(/\n/g, '<br>')}</p>
+          ${email ? `<p><b>From:</b> ${escapeHtml(email)}</p>` : '<p><b>From:</b> (not provided)</p>'}
+          <p><b>Message:</b><br>${escapeHtml(message).replace(/\n/g, '<br>')}</p>
         </div>
       `
     });
@@ -780,7 +1007,7 @@ setInterval(() => {
 }, 15 * 60 * 1000).unref();
 
 app.post('/api/sarang-heartbeat', (req, res) => {
-  const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown';
+  const ip = req.ip || 'unknown'; // trust-proxy-aware (see app.set('trust proxy', 1) above) — not attacker-forgeable
   if (isHeartbeatRateLimited(ip)) {
     return res.status(429).json({ success: false, message: 'Too many requests.' });
   }
@@ -817,29 +1044,39 @@ function receiptNumber(paymentRef) {
   return `AZX-${String(paymentRef || '').slice(-12).toUpperCase() || Date.now().toString(36).toUpperCase()}`;
 }
 
-function receiptHtml({ issuedAt, email, description, receipt }) {
-  if (!receipt || !receipt.amount) return '';
+function receiptHtml({ issuedAt, email, description, receipt, provider = null, fallbackRef = null }) {
   const dateStr = issuedAt.toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' });
+  const hasAmount = !!(receipt && receipt.amount);
+  // No usable amount reached us (receipt missing entirely, or present but missing `amount` — e.g.
+  // a Razorpay payment_link.paid event with no payload.payment.entity, or a Lemon Squeezy payload
+  // whose field names drifted from our best-understanding shape). We still render a genuine
+  // receipt block below — never blank — with an honest "see your payment confirmation" line
+  // instead of fabricating a number we don't actually have (same principle as the LS field-drift
+  // comment on the webhook handler: never show wrong OR blank data).
+  const refForReceipt = hasAmount ? receipt.paymentRef : ((receipt && receipt.paymentRef) || fallbackRef);
+  const providerLabel = provider || 'your payment processor';
   return `
     <div style="font-family:Arial,sans-serif;max-width:600px;margin-top:24px;border:1px solid #e5e7eb;border-radius:8px;padding:20px;">
       <h3 style="color:#0D1321;margin:0 0 12px;">Payment Receipt</h3>
       <table style="width:100%;border-collapse:collapse;font-size:14px;color:#333;">
-        <tr><td style="padding:4px 0;color:#666;width:140px;">Receipt No.</td><td>${receiptNumber(receipt.paymentRef)}</td></tr>
+        <tr><td style="padding:4px 0;color:#666;width:140px;">Receipt No.</td><td>${receiptNumber(refForReceipt)}</td></tr>
         <tr><td style="padding:4px 0;color:#666;">Date</td><td>${dateStr}</td></tr>
-        <tr><td style="padding:4px 0;color:#666;">Billed to</td><td>${email}</td></tr>
-        <tr><td style="padding:4px 0;color:#666;">Description</td><td>${description}</td></tr>
-        <tr><td style="padding:4px 0;color:#666;">Amount paid</td><td><b>${receipt.amount}</b></td></tr>
-        <tr><td style="padding:4px 0;color:#666;">Payment method</td><td>${receipt.method || 'Online payment'}</td></tr>
-        <tr><td style="padding:4px 0;color:#666;">Payment reference</td><td>${receipt.paymentRef || 'N/A'}</td></tr>
+        <tr><td style="padding:4px 0;color:#666;">Billed to</td><td>${escapeHtml(email)}</td></tr>
+        <tr><td style="padding:4px 0;color:#666;">Description</td><td>${escapeHtml(description)}</td></tr>
+        ${hasAmount
+          ? `<tr><td style="padding:4px 0;color:#666;">Amount paid</td><td><b>${escapeHtml(receipt.amount)}</b></td></tr>
+        <tr><td style="padding:4px 0;color:#666;">Payment method</td><td>${escapeHtml(receipt.method) || 'Online payment'}</td></tr>`
+          : `<tr><td style="padding:4px 0;color:#666;">Amount</td><td>See your payment confirmation from ${escapeHtml(providerLabel)} for the exact amount charged.</td></tr>`}
+        <tr><td style="padding:4px 0;color:#666;">Payment reference</td><td>${escapeHtml(refForReceipt) || 'N/A'}</td></tr>
         <tr><td style="padding:4px 0;color:#666;">Seller</td><td>${ASZUREX_BUSINESS_ADDRESS}${ASZUREX_GSTIN ? ` — GSTIN ${ASZUREX_GSTIN}` : ''}</td></tr>
       </table>
-      ${receipt.receiptUrl ? `<p style="margin:12px 0 0;font-size:13px;"><a href="${receipt.receiptUrl}" style="color:#0EA5E9;">View the official receipt from our payment processor</a></p>` : ''}
+      ${receipt?.receiptUrl ? `<p style="margin:12px 0 0;font-size:13px;"><a href="${escapeHtml(receipt.receiptUrl)}" style="color:#0EA5E9;">View the official receipt from our payment processor</a></p>` : ''}
       ${!ASZUREX_GSTIN ? `<p style="margin:12px 0 0;font-size:12px;color:#999;">This is a payment receipt. AszureX is not currently registered for GST, so no separate tax invoice with GSTIN is issued.</p>` : ''}
     </div>
   `;
 }
 
-async function issueRenewalKey({ email, region, seats = 1, receipt = null }) {
+async function issueRenewalKey({ email, region, seats = 1, receipt = null, provider = null, fallbackRef = null }) {
   const issuedAt = new Date();
   // One seat (the shop PC) keeps the plain SARANG2 key; more seats need the SARANG3 key that carries the count.
   const licenseKey = seats > 1 ? generateSarangLicenseKeyV3('PAID', region, issuedAt, seats) : generateSarangLicenseKeyV2('PAID', region, issuedAt);
@@ -855,10 +1092,10 @@ async function issueRenewalKey({ email, region, seats = 1, receipt = null }) {
         <p>Your new license key is below — enter it in Sarang under Settings → License to keep everything working exactly as before.</p>
         <p style="font-family:monospace;font-size:16px;background:#f7f9fc;border-left:4px solid #0EA5E9;padding:12px 16px;border-radius:4px;">${licenseKey}</p>
       </div>
-      ${receiptHtml({ issuedAt, email, description, receipt })}
+      ${receiptHtml({ issuedAt, email, description, receipt, provider, fallbackRef })}
     `
   });
-  console.log(`✅ Renewal key issued and emailed — ${email} (${region}, ${seats} seat${seats === 1 ? '' : 's'}${receipt ? ', receipt included' : ', NO receipt data on this event'})`);
+  console.log(`✅ Renewal key issued and emailed — ${email} (${region}, ${seats} seat${seats === 1 ? '' : 's'}${receipt && receipt.amount ? ', receipt included' : ', minimal fallback receipt (no amount data on this event — customer still got a referenced receipt block)'})`);
   return licenseKey;
 }
 
@@ -888,6 +1125,54 @@ function recordPartnerCommission({ ref, email, amountValue, currency, region, pa
     }).catch(err => console.error('⚠️  Sarang commission-sheet webhook failed (non-blocking):', err.message));
   }
 }
+
+// ── Webhook event de-dup (best-effort, in-memory) ──
+// Two real failure modes both mint a SECOND paid license key (and double-log
+// partner commission) for a single real payment if left unguarded:
+//   1. Razorpay fires BOTH `payment.captured` AND `payment_link.paid` for the
+//      SAME payment when checkout goes through a Payment Link — which is
+//      this system's actual checkout mechanism (see the seat-checkout/
+//      partner-signup comments above). This isn't a rare edge case, it's the
+//      expected shape of every Payment Link sale.
+//   2. Either provider may retry a webhook call that timed out on their end
+//      (e.g. a slow email send held the response past their timeout).
+// Keyed on a stable id from the event itself (the underlying payment id for
+// Razorpay, the event's own resource id for Lemon Squeezy) so genuinely
+// distinct payments never collide. Claimed BEFORE issueRenewalKey() runs
+// (not after) so two near-simultaneous requests for the same payment can't
+// race past the check before either finishes — and released again if
+// issuance actually fails, so a real transient failure doesn't get
+// permanently swallowed as a "duplicate" on the provider's legitimate retry.
+// In-memory only — doesn't survive a restart/redeploy and wouldn't dedup
+// across multiple instances if this were ever horizontally scaled. Render
+// runs this as a single instance, so it closes both failure modes above; a
+// fully durable fix needs a persistent store (a DB row per payment id),
+// worth doing if a database gets added here for other reasons.
+const sarangProcessedPaymentIds = new Set();
+const sarangProcessedPaymentTimestamps = new Map(); // dedupKey -> firstSeenAt, for the sweep
+const SARANG_PAYMENT_DEDUP_TTL_MS = 48 * 60 * 60 * 1000; // comfortably longer than any real provider retry window
+function claimPaymentDedup(dedupKey) {
+  // No stable id to key on — can't dedup, don't block issuance.
+  if (!dedupKey) return true;
+  if (sarangProcessedPaymentIds.has(dedupKey)) return false;
+  sarangProcessedPaymentIds.add(dedupKey);
+  sarangProcessedPaymentTimestamps.set(dedupKey, Date.now());
+  return true;
+}
+function releasePaymentDedup(dedupKey) {
+  if (!dedupKey) return;
+  sarangProcessedPaymentIds.delete(dedupKey);
+  sarangProcessedPaymentTimestamps.delete(dedupKey);
+}
+setInterval(() => {
+  const cutoff = Date.now() - SARANG_PAYMENT_DEDUP_TTL_MS;
+  for (const [key, seenAt] of sarangProcessedPaymentTimestamps.entries()) {
+    if (seenAt < cutoff) {
+      sarangProcessedPaymentTimestamps.delete(key);
+      sarangProcessedPaymentIds.delete(key);
+    }
+  }
+}, 15 * 60 * 1000).unref();
 
 app.post('/api/webhooks/razorpay', async (req, res) => {
   try {
@@ -926,9 +1211,30 @@ app.post('/api/webhooks/razorpay', async (req, res) => {
         method: paymentEntity.method ? paymentEntity.method.toUpperCase() : 'Razorpay',
         paymentRef: paymentEntity.id
       } : null;
-      await issueRenewalKey({ email, region: 'IN', seats: Number(notes.seats) || 1, receipt });
-      if (paymentEntity?.amount) {
-        recordPartnerCommission({ ref: notes.ref, email, amountValue: paymentEntity.amount / 100, currency: '₹', region: 'IN', paymentRef: paymentEntity.id });
+      // Real event id for the receipt's reference number even when paymentEntity (and so
+      // receipt/receipt.amount) is absent — e.g. a payment_link.paid event whose payload only
+      // populated payment_link.entity, not payment.entity. Same ids the dedup key below is built
+      // from, so it's still traceable back to this exact event in the logs.
+      const fallbackRef = paymentEntity?.id || event.payload?.payment_link?.entity?.id || null;
+
+      // Dedup key: the underlying payment id, present in the payload for both event types this
+      // handler reacts to when they represent the same real payment (see the comment above).
+      const dedupKey = paymentEntity?.id
+        ? `rzp:payment:${paymentEntity.id}`
+        : (event.payload?.payment_link?.entity?.id ? `rzp:link:${event.payload.payment_link.entity.id}` : null);
+      if (!claimPaymentDedup(dedupKey)) {
+        console.log(`⚠️  Razorpay webhook: duplicate event for ${dedupKey} — a key was already issued for this payment, skipping (ack anyway).`);
+        return res.status(200).json({ success: true });
+      }
+
+      try {
+        await issueRenewalKey({ email, region: 'IN', seats: Number(notes.seats) || 1, receipt, provider: 'Razorpay', fallbackRef });
+        if (paymentEntity?.amount) {
+          recordPartnerCommission({ ref: notes.ref, email, amountValue: paymentEntity.amount / 100, currency: '₹', region: 'IN', paymentRef: paymentEntity.id });
+        }
+      } catch (issueError) {
+        releasePaymentDedup(dedupKey); // issuance didn't actually complete — let a legitimate retry try again
+        throw issueError;
       }
     }
 
@@ -972,8 +1278,10 @@ app.post('/api/webhooks/lemonsqueezy', async (req, res) => {
       // Lemon Squeezy is merchant of record and already emails its own official receipt/invoice
       // to the buyer, so this is a best-effort supplementary summary, not a replacement for it —
       // exact field names below are our best understanding of the LS webhook payload and are
-      // deliberately optional-chained: if the shape differs, we simply omit this block rather
-      // than show wrong or blank data (see receiptHtml()'s !receipt.amount guard).
+      // deliberately optional-chained: if the shape differs, `receipt` stays null and
+      // receiptHtml() falls back to its minimal receipt block (honest "see your payment
+      // confirmation" line + fallbackRef below) rather than showing a wrong amount — never a
+      // blank/omitted block, see receiptHtml()'s `hasAmount` branch.
       const lsAttrs = event.data?.attributes;
       const receipt = lsAttrs?.total_formatted ? {
         amount: lsAttrs.total_formatted,
@@ -981,11 +1289,29 @@ app.post('/api/webhooks/lemonsqueezy', async (req, res) => {
         paymentRef: lsAttrs.order_number || event.data?.id,
         receiptUrl: lsAttrs.urls?.receipt || lsAttrs.receipt_url || null
       } : null;
-      await issueRenewalKey({ email, region: 'INTL', seats: Number(custom.seats) || 1, receipt });
-      // custom.ref (checkout[custom][ref] on the partner's checkout URL) mirrors Razorpay's notes.ref.
-      const totalAmount = Number(lsAttrs?.total) / 100; // LS gives cents; total_formatted is display-only text
-      if (Number.isFinite(totalAmount) && totalAmount > 0) {
-        recordPartnerCommission({ ref: custom.ref, email, amountValue: totalAmount, currency: lsAttrs?.currency ? `${lsAttrs.currency} ` : '$', region: 'INTL', paymentRef: lsAttrs?.order_number || event.data?.id });
+      // Real event id for the receipt's reference number even when total_formatted (and so
+      // receipt) is absent — same id the dedup key below is built from, so it's still traceable
+      // back to this exact event in the logs.
+      const fallbackRef = event.data?.id || null;
+
+      // Dedup key: this event's own resource id, namespaced by event name so an order_created id
+      // can never collide with an unrelated subscription_payment_success id in the same namespace.
+      const dedupKey = event.data?.id ? `ls:${eventName}:${event.data.id}` : null;
+      if (!claimPaymentDedup(dedupKey)) {
+        console.log(`⚠️  Lemon Squeezy webhook: duplicate event for ${dedupKey} — a key was already issued for this payment, skipping (ack anyway).`);
+        return res.status(200).json({ success: true });
+      }
+
+      try {
+        await issueRenewalKey({ email, region: 'INTL', seats: Number(custom.seats) || 1, receipt, provider: 'Lemon Squeezy', fallbackRef });
+        // custom.ref (checkout[custom][ref] on the partner's checkout URL) mirrors Razorpay's notes.ref.
+        const totalAmount = Number(lsAttrs?.total) / 100; // LS gives cents; total_formatted is display-only text
+        if (Number.isFinite(totalAmount) && totalAmount > 0) {
+          recordPartnerCommission({ ref: custom.ref, email, amountValue: totalAmount, currency: lsAttrs?.currency ? `${lsAttrs.currency} ` : '$', region: 'INTL', paymentRef: lsAttrs?.order_number || event.data?.id });
+        }
+      } catch (issueError) {
+        releasePaymentDedup(dedupKey);
+        throw issueError;
       }
     }
 
