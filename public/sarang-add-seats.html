@@ -67,7 +67,7 @@
             <p style="color:var(--text-faint);font-size:0.85rem;margin:0 0 4px;">Estimated price (International)</p>
             <p style="color:#fff;font-size:1.6rem;font-weight:700;margin:0;" id="price-intl">$208<span style="font-size:0.9rem;color:var(--text-faint);">/year</span></p>
           </div>
-          <p style="color:var(--text-faint2);font-size:0.75rem;margin:0 0 20px;">These are indicative prices (base license + extra seats at a per-seat rate) — the final amount is confirmed with you before you pay. Extra seats run for the remainder of your current license period, so your first payment may be prorated.</p>
+          <p style="color:var(--text-faint2);font-size:0.75rem;margin:0 0 20px;">This is the exact amount you'll be charged — you'll land straight on a real Razorpay or Lemon Squeezy payment page for it. Extra seats run for the remainder of your current license period, so your first payment may be prorated; we'll always show the real amount on the payment page itself before you pay.</p>
 
           <label for="seat-email" style="display:block;color:var(--text-faint);font-size:0.85rem;margin-bottom:8px;">Your email (the one your Sarang license is under)</label>
           <input id="seat-email" type="email" required placeholder="you@business.com" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:#1E293B;color:#fff;margin-bottom:20px;">
@@ -78,7 +78,7 @@
             <option value="INTL">Outside India ($, via Lemon Squeezy)</option>
           </select>
 
-          <button type="button" id="seat-request-btn" class="btn btn-accent" style="width:100%;">Request payment link for these seats</button>
+          <button type="button" id="seat-request-btn" class="btn btn-accent" style="width:100%;">Continue to payment</button>
           <p id="seat-request-msg" style="color:var(--text-faint2);font-size:0.8rem;margin:12px 0 0;display:none;"></p>
         </div>
 
@@ -162,7 +162,7 @@
         msg.style.display = 'block';
       } finally {
         btn.disabled = false;
-        btn.textContent = 'Request payment link for these seats';
+        btn.textContent = 'Continue to payment';
       }
     });
   </script>
