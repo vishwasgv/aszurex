@@ -54,7 +54,7 @@
 
         <div style="background:var(--card-dark);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:28px;">
           <div role="radiogroup" aria-label="What do you want to do?" style="display:flex;gap:8px;margin-bottom:22px;">
-            <button type="button" id="mode-add" role="radio" aria-checked="true" style="flex:1;padding:10px 8px;border-radius:8px;border:1px solid #0EA5E9;background:#0EA5E9;color:#fff;font-weight:600;cursor:pointer;">Add PCs</button>
+            <button type="button" id="mode-add" role="radio" aria-checked="true" style="flex:1;padding:10px 8px;border-radius:8px;border:1px solid #0284C7;background:#0284C7;color:#fff;font-weight:600;cursor:pointer;">Add PCs</button>
             <button type="button" id="mode-renew" role="radio" aria-checked="false" style="flex:1;padding:10px 8px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:#1E293B;color:#fff;font-weight:600;cursor:pointer;">Renew multi-PC license</button>
           </div>
           <p id="mode-help" style="color:var(--text-faint2);font-size:0.8rem;margin:-6px 0 18px;">Pay only for the extra PCs. They run until your current license expires.</p>
@@ -91,7 +91,7 @@
         </div>
 
         <p style="color:var(--text-faint2);font-size:0.8rem;margin-top:20px;">Already have a payment link from us for this? Use the link in our email instead — no need to request another one.</p>
-        <p style="color:var(--text-faint2);font-size:0.8rem;">See our <a href="/sarang-terms.html" style="color:#0EA5E9;">Terms</a> (section 3, PCs and seats) and <a href="/sarang-refund.html" style="color:#0EA5E9;">Refund Policy</a> for how seats work.</p>
+        <p style="color:var(--text-faint2);font-size:0.8rem;">See our <a href="/sarang-terms.html" style="color:#0369A1;">Terms</a> (section 3, PCs and seats) and <a href="/sarang-refund.html" style="color:#0369A1;">Refund Policy</a> for how seats work.</p>
 
       </div>
     </div>
@@ -140,8 +140,8 @@
       const addBtn = document.getElementById('mode-add'), renewBtn = document.getElementById('mode-renew');
       for (const [btn, on] of [[addBtn, !renew], [renewBtn, renew]]) {
         btn.setAttribute('aria-checked', String(on));
-        btn.style.background = on ? '#0EA5E9' : '#1E293B';
-        btn.style.borderColor = on ? '#0EA5E9' : 'rgba(255,255,255,0.2)';
+        btn.style.background = on ? '#0284C7' : '#1E293B';
+        btn.style.borderColor = on ? '#0284C7' : 'rgba(255,255,255,0.2)';
       }
       document.getElementById('mode-help').textContent = renew
         ? 'Renew your whole license (your shop PC plus the extra PCs) for another year with one payment and one new key.'

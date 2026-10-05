@@ -1021,7 +1021,7 @@ input, textarea, select { font-family: inherit; }
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--text-faint);
+  color: var(--text-faint2);
   margin-bottom: 10px;
 }
 .service-features { display: flex; flex-direction: column; gap: 7px; }
@@ -1329,14 +1329,14 @@ input, textarea, select { font-family: inherit; }
   padding: 15px;
   font-size: 16px;
   font-weight: 700;
-  background: var(--accent);
+  background: #0284C7;
   color: #fff;
   border: none;
   border-radius: var(--radius);
   cursor: pointer;
   transition: background 0.2s, transform 0.2s;
 }
-.form-submit:hover { background: var(--accent-h); transform: translateY(-1px); }
+.form-submit:hover { background: #0369A1; transform: translateY(-1px); }
 
 .calendly-section {
   padding: var(--section) 0;
@@ -1511,7 +1511,7 @@ input, textarea, select { font-family: inherit; }
 .process-visual-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to right, rgba(6,9,15,0.75) 0%, rgba(6,9,15,0.15) 65%, transparent 100%);
+  background: linear-gradient(to right, rgba(6,9,15,0.9) 0%, rgba(6,9,15,0.68) 55%, rgba(6,9,15,0.2) 100%);
 }
 .process-visual-label {
   position: absolute;
@@ -1529,7 +1529,7 @@ input, textarea, select { font-family: inherit; }
 }
 .process-visual-label p {
   font-size: 14px;
-  color: rgba(255,255,255,0.55);
+  color: rgba(255,255,255,0.78);
 }
 
 /* ── Contact info panel image ────────────────────────────── */
@@ -1890,3 +1890,18 @@ img[src*="images.unsplash.com"] {
 @media (prefers-reduced-motion: reduce) {
   .reveal { opacity: 1; transform: none; transition: none; }
 }
+
+/* Contrast fixes: sky-blue (#0EA5E9) and slate-grey (#94A3B8) text were only ~2.5:1 on white/light
+   sections. Darker shades below meet WCAG AA; dark-section variants (.eyebrow-inv etc.) are untouched. */
+.eyebrow,
+.process-num,
+.testi-num,
+.qual-num,
+.careers-email-link { color: #0369A1; }
+.careers-email-link:hover { color: var(--accent-h); }
+.sed-num,
+.sed-arrow,
+.contact-label { color: var(--text-faint2); }
+.footer-col-title { color: rgba(255,255,255,0.55); }
+.btn-accent { background: #0284C7; border-color: #0284C7; }
+.btn-accent:hover { background: #0369A1; border-color: #0369A1; }
