@@ -178,7 +178,17 @@ app.use(cors());
 // order and silently break signature checks if you sign the parsed object).
 app.use(bodyParser.json({ verify: (req, res, buf) => { req.rawBody = buf; } }));
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
+// Basic hardening headers. No CSP on purpose: every page uses inline scripts/styles.
+app.disable('x-powered-by');
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  next();
+});
+// extensions:['html'] makes /sarang, /about, /sarang-add-seats work without ".html". The installed
+// Sarang app links to https://aszurex.com/sarang (Renew button, update check), which was a 404.
+app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'] }));
 
 // ── File upload ────────────────────────────────────────────
 const storage = multer.diskStorage({
@@ -192,9 +202,12 @@ const storage = multer.diskStorage({
   }
 });
 
+const RESUME_EXTENSIONS = new Set(['.pdf', '.doc', '.docx', '.rtf', '.txt']);
 const upload = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 }
+  limits: { fileSize: 5 * 1024 * 1024, files: 1 },
+  // Only document types are accepted as a resume; anything else is dropped before touching disk.
+  fileFilter: (req, file, cb) => cb(null, RESUME_EXTENSIONS.has(path.extname(file.originalname || '').toLowerCase()))
 });
 
 // ── HTML-escaping for user-supplied text embedded in emails ─
@@ -215,13 +228,44 @@ function escapeHtml(value) {
     .replace(/'/g, '&#39;');
 }
 
+// Strips CR/LF so user text can never inject extra mail headers through a subject line.
+function oneLine(value) {
+  return String(value ?? '').replace(/[\r\n]+/g, ' ').trim();
+}
+
+// Contact and job-application forms were completely unthrottled: anyone could script them to flood
+// the founder's inbox (the job form also writes uploaded files to disk). Same per-IP shape as the
+// other limiters in this file, kept separate so it never eats a buyer's download/checkout quota.
+const formHits = new Map(); // ip -> [timestamps]
+function isFormRateLimited(ip) {
+  const now = Date.now();
+  const hits = (formHits.get(ip) || []).filter(t => now - t < 60 * 60 * 1000);
+  hits.push(now);
+  formHits.set(ip, hits);
+  return hits.length > 10; // 10 form submissions/hour/IP
+}
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, hits] of formHits.entries()) {
+    const fresh = hits.filter(t => now - t < 60 * 60 * 1000);
+    if (fresh.length === 0) formHits.delete(ip);
+    else formHits.set(ip, fresh);
+  }
+}, 15 * 60 * 1000).unref();
+
 // ── Contact form ───────────────────────────────────────────
 app.post('/api/contact', async (req, res) => {
   try {
+    if (isFormRateLimited(req.ip || 'unknown')) {
+      return res.status(429).json({ success: false, message: 'Too many requests. Please try again later.' });
+    }
     const { name, email, company, enquiryType, message } = req.body;
 
     if (!name || !email || !message) {
       return res.status(400).json({ success: false, message: 'Please fill in all required fields.' });
+    }
+    if (!SARANG_EMAIL_RE.test(email)) {
+      return res.status(400).json({ success: false, message: 'Please enter a valid email address.' });
     }
 
     const safeName = escapeHtml(name);
@@ -229,10 +273,10 @@ app.post('/api/contact', async (req, res) => {
     const safeCompany = escapeHtml(company);
     const safeMessage = escapeHtml(message).replace(/\n/g, '<br>');
 
-    const type    = enquiryType || 'General Enquiry';
+    const type    = oneLine(enquiryType) || 'General Enquiry';
     const subject = type === 'Delivery Partnership'
-      ? `Partnership Enquiry: ${name} | ${company || 'No company'}`
-      : `New Contact [${type}]: ${name}`;
+      ? `Partnership Enquiry: ${oneLine(name)} | ${oneLine(company) || 'No company'}`
+      : `New Contact [${type}]: ${oneLine(name)}`;
 
     const html = type === 'Delivery Partnership' ? `
       <div style="font-family:Arial,sans-serif;max-width:600px;">
@@ -263,7 +307,7 @@ app.post('/api/contact', async (req, res) => {
     await createTransporter().sendMail({
       from:    `"AszureX" <${ZOHO_EMAIL}>`,
       to:      TO_EMAIL,
-      replyTo: email,
+      replyTo: oneLine(email),
       subject,
       html
     });
@@ -282,15 +326,28 @@ app.post('/api/contact', async (req, res) => {
 
 // ── Career form ────────────────────────────────────────────
 app.post('/api/apply', upload.single('resume'), async (req, res) => {
+  const resume = req.file;
+  const removeResume = () => { try { if (resume && fs.existsSync(resume.path)) fs.unlinkSync(resume.path); } catch {} };
   try {
+    if (isFormRateLimited(req.ip || 'unknown')) {
+      removeResume();
+      return res.status(429).json({ success: false, message: 'Too many requests. Please try again later.' });
+    }
     const { name, email, phone, position, experience, coverLetter } = req.body;
-    const resume = req.file;
+    if (!name || !email || !position) {
+      removeResume();
+      return res.status(400).json({ success: false, message: 'Please fill in all required fields.' });
+    }
+    if (!SARANG_EMAIL_RE.test(email)) {
+      removeResume();
+      return res.status(400).json({ success: false, message: 'Please enter a valid email address.' });
+    }
 
     await createTransporter().sendMail({
       from:    `"AszureX" <${ZOHO_EMAIL}>`,
       to:      TO_EMAIL,
-      replyTo: email,
-      subject: `Job Application: ${position}`,
+      replyTo: oneLine(email),
+      subject: `Job Application: ${oneLine(position)}`,
       html: `
         <h2>New Job Application</h2>
         <p><strong>Position:</strong> ${escapeHtml(position)}</p>
@@ -310,11 +367,12 @@ app.post('/api/apply', upload.single('resume'), async (req, res) => {
 
     console.log(`✅ Job application email sent — ${name} for ${position}`);
 
-    if (resume && fs.existsSync(resume.path)) fs.unlinkSync(resume.path);
+    removeResume();
 
     return res.json({ success: true, message: 'Application submitted successfully!' });
 
   } catch (error) {
+    removeResume(); // a failed send must not leave the resume on disk
     console.error('❌ Job application email error:', error.message, '| code:', error.code);
     return res.status(500).json({ success: false, message: 'Failed to submit application.' });
   }
@@ -346,11 +404,18 @@ app.post('/api/apply', upload.single('resume'), async (req, res) => {
 // entirely from this formula; it now returns ONLY the incremental seat cost.
 const SARANG_SEAT_PER_SEAT_IN = 2999;
 const SARANG_SEAT_PER_SEAT_INTL = 59;
-function computeSarangSeatTotal(seatCount, region) {
+// Yearly renewal of a multi-PC license (2026-10-06): a renewal re-buys the WHOLE license for
+// another year, so unlike an add-seats purchase it DOES include the base price —
+// base + (totalPCs - 1) x per-seat. Must stay identical to BASE_* in sarang-add-seats.html and to
+// the base price on sarang.html (₹6,999 / $149).
+const SARANG_BASE_PRICE_IN = 6999;
+const SARANG_BASE_PRICE_INTL = 149;
+function computeSarangSeatTotal(seatCount, region, renewal = false) {
   const extra = seatCount - 1;
-  return region === 'IN'
+  const base = renewal ? (region === 'IN' ? SARANG_BASE_PRICE_IN : SARANG_BASE_PRICE_INTL) : 0;
+  return base + (region === 'IN'
     ? extra * SARANG_SEAT_PER_SEAT_IN
-    : extra * SARANG_SEAT_PER_SEAT_INTL;
+    : extra * SARANG_SEAT_PER_SEAT_INTL);
 }
 
 // ── Seat co-terming (2026-10-01) ──────────────────────────────
@@ -415,20 +480,21 @@ const LEMONSQUEEZY_VARIANT_ID = process.env.LEMONSQUEEZY_VARIANT_ID || '';
 // captureSarangReferral()), so there is no known partner code to attach at checkout time for this
 // route. notes.ref is intentionally left unset here — partner attribution for extra-seat sales
 // stays a manual, founder-created Payment Link for now, matching current scope.
-async function createRazorpaySeatPaymentLink(seatCount, email, currentExpiryDate = null) {
+async function createRazorpaySeatPaymentLink(seatCount, email, currentExpiryDate = null, renewal = false) {
   if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) return null;
   try {
-    const amountRupees = computeSarangSeatTotal(seatCount, 'IN');
+    const amountRupees = computeSarangSeatTotal(seatCount, 'IN', renewal);
     const auth = Buffer.from(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`).toString('base64');
     const notes = { seats: String(seatCount) }; // read back by /api/webhooks/razorpay's issueRenewalKey() call
-    if (currentExpiryDate) notes.currentExpiryDate = currentExpiryDate.toISOString().slice(0, 10); // co-terming — see issueRenewalKey()
+    if (renewal) notes.renewal = '1'; // full-license renewal: no co-terming, fresh 365 days
+    else if (currentExpiryDate) notes.currentExpiryDate = currentExpiryDate.toISOString().slice(0, 10); // co-terming — see issueRenewalKey()
     const resp = await fetch('https://api.razorpay.com/v1/payment_links', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Basic ${auth}` },
       body: JSON.stringify({
         amount: amountRupees * 100, // Razorpay wants paise, not rupees
         currency: 'INR',
-        description: `Sarang Business OS Lite — ${seatCount} PCs (annual license)`,
+        description: `Sarang Business OS Lite — ${renewal ? 'yearly renewal, ' : ''}${seatCount} PCs (annual license)`,
         customer: { email },
         notify: { email: true, sms: false },
         reminder_enable: true,
@@ -454,12 +520,13 @@ async function createRazorpaySeatPaymentLink(seatCount, email, currentExpiryDate
 // configured for "Pay what you want" pricing on the Lemon Squeezy side). Returns the checkout
 // URL, or null on any missing config/failure so the caller falls through to the email fallback,
 // same contract as the Razorpay function above.
-async function createLemonSqueezySeatCheckout(seatCount, email, currentExpiryDate = null) {
+async function createLemonSqueezySeatCheckout(seatCount, email, currentExpiryDate = null, renewal = false) {
   if (!LEMONSQUEEZY_API_KEY || !LEMONSQUEEZY_STORE_ID || !LEMONSQUEEZY_VARIANT_ID) return null;
   try {
-    const amountDollars = computeSarangSeatTotal(seatCount, 'INTL');
+    const amountDollars = computeSarangSeatTotal(seatCount, 'INTL', renewal);
     const custom = { seats: String(seatCount) }; // read back by /api/webhooks/lemonsqueezy's issueRenewalKey() call
-    if (currentExpiryDate) custom.currentExpiryDate = currentExpiryDate.toISOString().slice(0, 10); // co-terming — see issueRenewalKey()
+    if (renewal) custom.renewal = '1'; // full-license renewal: no co-terming, fresh 365 days; the webhook's paid-amount guard also reads this
+    else if (currentExpiryDate) custom.currentExpiryDate = currentExpiryDate.toISOString().slice(0, 10); // co-terming — see issueRenewalKey()
     const resp = await fetch('https://api.lemonsqueezy.com/v1/checkouts', {
       method: 'POST',
       headers: {
@@ -473,7 +540,7 @@ async function createLemonSqueezySeatCheckout(seatCount, email, currentExpiryDat
           attributes: {
             custom_price: amountDollars * 100, // cents; only honored on a PWYW-priced variant, see comment above
             product_options: {
-              name: `Sarang Business OS Lite — ${seatCount} PCs (annual license)`,
+              name: `Sarang Business OS Lite — ${renewal ? 'yearly renewal, ' : ''}${seatCount} PCs (annual license)`,
               description: `Annual license covering ${seatCount} PCs signed in at once.`
             },
             checkout_data: {
@@ -517,8 +584,9 @@ app.post('/api/sarang-seat-checkout', async (req, res) => {
       return res.status(429).json({ success: false, message: 'Too many requests. Please try again later.' });
     }
 
-    const { email, seats, region, currentExpiryDate } = req.body;
+    const { email, seats, region, currentExpiryDate, mode } = req.body;
     const seatCount = Number(seats);
+    const isRenewal = mode === 'renew'; // yearly renewal of the whole multi-PC license (base + seats), never co-termed
     if (!email || !SARANG_EMAIL_RE.test(email)) {
       return res.status(400).json({ success: false, message: 'Please enter a valid email address.' });
     }
@@ -530,13 +598,14 @@ app.post('/api/sarang-seat-checkout', async (req, res) => {
     // Co-terming (2026-10-01): missing/unparseable/past-dated input never blocks the purchase —
     // it just falls back to null, meaning "co-terming unavailable", and issueRenewalKey() falls
     // back to its existing default (a fresh full cycle from today). See parseValidFutureDate().
-    const validExpiryDate = parseValidFutureDate(currentExpiryDate);
-    if (currentExpiryDate && !validExpiryDate) {
+    const validExpiryDate = isRenewal ? null : parseValidFutureDate(currentExpiryDate);
+    if (!isRenewal && currentExpiryDate && !validExpiryDate) {
       console.log(`ℹ️  Seat-checkout: currentExpiryDate "${currentExpiryDate}" missing/unparseable/not in the future — proceeding without co-terming (${email}).`);
     }
 
     // A ready-made Payment Link for this exact tier — send the customer straight there.
-    const paymentUrl = SARANG_SEAT_PAYMENT_LINKS?.[String(seatCount)]?.[seatRegion];
+    // (Static links are add-seats-only prices; a renewal must never reuse one.)
+    const paymentUrl = isRenewal ? null : SARANG_SEAT_PAYMENT_LINKS?.[String(seatCount)]?.[seatRegion];
     if (paymentUrl) {
       console.log(`✅ Seat-checkout: known Payment Link used — ${email}, ${seatCount} seats, ${seatRegion}`);
       return res.json({ success: true, paymentUrl });
@@ -547,8 +616,8 @@ app.post('/api/sarang-seat-checkout', async (req, res) => {
     // also falls through to the email path below on any live failure — see the two functions'
     // own comments above for the full contract.
     const dynamicPaymentUrl = seatRegion === 'IN'
-      ? await createRazorpaySeatPaymentLink(seatCount, email, validExpiryDate)
-      : await createLemonSqueezySeatCheckout(seatCount, email, validExpiryDate);
+      ? await createRazorpaySeatPaymentLink(seatCount, email, validExpiryDate, isRenewal)
+      : await createLemonSqueezySeatCheckout(seatCount, email, validExpiryDate, isRenewal);
     if (dynamicPaymentUrl) {
       console.log(`✅ Seat-checkout: dynamic Payment Link created — ${email}, ${seatCount} seats, ${seatRegion}`);
       return res.json({ success: true, paymentUrl: dynamicPaymentUrl });
@@ -560,26 +629,26 @@ app.post('/api/sarang-seat-checkout', async (req, res) => {
       fetch(SARANG_SEAT_REQUEST_SHEET_WEBHOOK_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, seats: seatCount, region: seatRegion, submittedAt })
+        body: JSON.stringify({ email, seats: seatCount, region: seatRegion, submittedAt, mode: isRenewal ? 'renew' : 'add' })
       }).catch(err => console.error('⚠️  Sarang seat-request sheet webhook failed (non-blocking):', err.message));
     }
     await createTransporter().sendMail({
       from: `"AszureX" <${ZOHO_EMAIL}>`,
       to: TO_EMAIL,
       replyTo: email,
-      subject: `Add-seats request: ${seatCount} PCs (${seatRegion}) — ${email}`,
+      subject: `${isRenewal ? 'Multi-PC RENEWAL' : 'Add-seats'} request: ${seatCount} PCs (${seatRegion}) — ${email}`,
       html: `
         <div style="font-family:Arial,sans-serif;max-width:600px;">
-          <h3 style="color:#0D1321;">New add-seats request</h3>
+          <h3 style="color:#0D1321;">New ${isRenewal ? 'multi-PC yearly renewal' : 'add-seats'} request</h3>
           <p><b>Email:</b> ${escapeHtml(email)}</p>
-          <p><b>Total PCs wanted:</b> ${seatCount} (${seatCount - 1} extra)</p>
+          <p><b>Total PCs wanted:</b> ${seatCount} (${seatCount - 1} extra)${isRenewal ? ` — full renewal: charge ${seatRegion === 'IN' ? '₹' : '$'}${computeSarangSeatTotal(seatCount, seatRegion, true)} (base + extra PCs), add notes.renewal=1` : ''}</p>
           <p><b>Region:</b> ${seatRegion === 'IN' ? 'India (Razorpay)' : 'International (Lemon Squeezy)'}</p>
           <p style="color:#666;font-size:13px;">Create a Payment Link/checkout for this seat count with notes.seats=${seatCount} (Razorpay) or custom_data.seats=${seatCount} (Lemon Squeezy) and send it to the customer; the renewal webhook already knows how to read that field.</p>
         </div>
       `
     });
 
-    console.log(`✅ Seat-checkout: no link configured, founder notified — ${email}, ${seatCount} seats, ${seatRegion}`);
+    console.log(`✅ Seat-checkout: no link configured, founder notified — ${email}, ${seatCount} seats, ${seatRegion}${isRenewal ? ', RENEWAL' : ''}`);
     return res.json({ success: true, message: `Thanks — we'll email you a payment link for ${seatCount} PCs shortly.` });
 
   } catch (error) {
@@ -1055,7 +1124,9 @@ app.post('/api/sarang-heartbeat', (req, res) => {
   // fingerprintHash doesn't change this response, only the Sheet log below.
   // keyHash IS checked against SARANG_REVOKED_KEY_HASHES — a manual,
   // founder-edited list, never automatic — see the env var's own comment.
-  const { keyHash, fingerprintHash } = req.body || {};
+  const body = req.body || {};
+  const keyHash = typeof body.keyHash === 'string' ? body.keyHash : '';
+  const fingerprintHash = typeof body.fingerprintHash === 'string' ? body.fingerprintHash : '';
   const responseBody = { success: true, enforcementToken: signSarangKillSwitchToken(SARANG_ENFORCEMENT_SUSPENDED()) };
   if (keyHash && getSarangRevokedKeyHashes().includes(keyHash.toLowerCase())) {
     responseBody.revocationToken = signSarangRevocationToken(keyHash);
@@ -1384,7 +1455,7 @@ app.post('/api/webhooks/lemonsqueezy', async (req, res) => {
       const seatCountOnOrder = Number(custom.seats) || 0;
       const isSeatOrder = (LEMONSQUEEZY_VARIANT_ID && orderVariantId === String(LEMONSQUEEZY_VARIANT_ID)) || seatCountOnOrder > 1;
       if (isSeatOrder) {
-        const expectedUsd = computeSarangSeatTotal(seatCountOnOrder, 'INTL');
+        const expectedUsd = computeSarangSeatTotal(seatCountOnOrder, 'INTL', custom.renewal === '1' || custom.renewal === 1 || custom.renewal === true);
         const totalUsd = Number(lsAttrs?.total_usd ?? (lsAttrs?.currency === 'USD' ? lsAttrs?.total : NaN)) / 100;
         const taxUsd = Number(lsAttrs?.tax_usd ?? (lsAttrs?.currency === 'USD' ? lsAttrs?.tax : 0)) / 100 || 0;
         const paidNetUsd = totalUsd - taxUsd;
@@ -1433,6 +1504,22 @@ app.post('/api/webhooks/lemonsqueezy', async (req, res) => {
 // ── Clean URL for delivery partnerships page ───────────────
 app.get('/delivery-partnerships', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'delivery-partnerships.html'));
+});
+
+// ── 404 and error handling ─────────────────────────────────
+// Unknown API paths get JSON; unknown pages get a small branded page instead of Express's bare
+// "Error" screen, with a 404 status so search engines drop dead URLs.
+app.use((req, res) => {
+  if (req.path.startsWith('/api/')) return res.status(404).json({ success: false, message: 'Not found.' });
+  res.status(404).type('html').send('<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>Page not found | AszureX</title><style>body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#06090F;color:#fff;font-family:Arial,sans-serif;text-align:center;padding:24px}a{color:#0EA5E9}</style></head><body><div><h1>Page not found</h1><p>That page does not exist. <a href="/">Go to the AszureX home page</a> or <a href="/sarang.html">see Sarang Business OS Lite</a>.</p></div></body></html>');
+});
+// Malformed JSON bodies, oversize uploads etc. come here; never leak a stack trace.
+app.use((err, req, res, next) => {
+  if (res.headersSent) return next(err);
+  const clientFault = err.name === 'MulterError' || /multipart|unexpected end of form|boundary/i.test(err.message || '');
+  const status = err.status && err.status >= 400 && err.status < 500 ? err.status : (clientFault ? 400 : 500);
+  if (status === 500) console.error('❌ Unhandled error:', err.message);
+  res.status(status).json({ success: false, message: status === 500 ? 'Something went wrong.' : 'Invalid request.' });
 });
 
 // ── Start ──────────────────────────────────────────────────

@@ -61,7 +61,10 @@ built and given away by AszureX as a standalone tool any business can use.
 - **Price**: Free with full functionality for the first 100 days (not a
   limited trial). After that, ₹6,999/year in India or $149/year
   internationally, billed once per device per year. No other fees, no ads,
-  no paywalled features.
+  no paywalled features. Extra PCs for a multi-PC license cost ₹2,999 (India)
+  or $59 (international) per extra PC per year; a multi-PC yearly renewal is
+  the base price plus the extra PCs (for example 3 PCs = ₹12,997 in India).
+  Add PCs or renew a multi-PC license at https://aszurex.com/sarang-add-seats.html
 - **Offline-first**: Runs entirely on the user's own computer, including its
   AI assistant — no internet connection required to operate, no cloud
   server involved, no recurring cloud subscription model.
@@ -70,7 +73,9 @@ built and given away by AszureX as a standalone tool any business can use.
   (not tied to business data).
 - **Platform**: Windows 10/11 (64-bit). 8GB RAM recommended if using the
   on-device AI assistant.
-- **Business coverage**: 50 business types configured out of the box —
+- **Business coverage**: exactly 50 business types (the current, correct count;
+  older articles and cached copies that say 43 or any other number are out of
+  date) configured out of the box —
   restaurants/cafés, retail and general stores, pharmacies, distributors,
   clothing and footwear stores, hardware stores, jewellery shops, hotels,
   manufacturers, clinics and healthcare practices, and many professional/
@@ -121,6 +126,11 @@ their data to stay entirely on their own device.
 - Careers: https://aszurex.com/careers.html
 - Delivery Partnerships: https://aszurex.com/delivery-partnerships
 - Sarang Business OS Lite (free, fully offline business software): https://aszurex.com/sarang.html
+- Sarang Add PCs / Renew multi-PC license: https://aszurex.com/sarang-add-seats.html
+- Sarang Referral Partner Terms: https://aszurex.com/sarang-partners.html
+- Sarang Terms: https://aszurex.com/sarang-terms.html
 - Sarang Privacy Policy: https://aszurex.com/sarang-privacy.html
 - Sarang Refund Policy: https://aszurex.com/sarang-refund.html
 - Contact: https://aszurex.com/contact.html
+- Site Privacy Policy: https://aszurex.com/privacy.html
+- Site Terms: https://aszurex.com/terms.html

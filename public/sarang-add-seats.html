@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Add extra PC seats to your Sarang Business OS Lite multi-user license.">
+<meta name="description" content="Add extra PC seats to your Sarang Business OS Lite multi-user license, or renew a multi-PC license for another year.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://aszurex.com/sarang-add-seats.html">
 <link rel="icon" href="/favicon.png" type="image/png" sizes="any">
 <link rel="icon" href="/aszurex-logo.png" type="image/png" sizes="512x512">
 <meta name="theme-color" content="#06090F">
-<title>Add Seats | Sarang | AszureX</title>
+<title>Add PCs or Renew Multi-PC | Sarang | AszureX</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
@@ -42,8 +42,8 @@
     <div class="container">
       <div class="page-header-inner">
         <p class="page-eyebrow">Sarang Business OS Lite — Multi-user</p>
-        <h1 class="page-h1">Add PC seats</h1>
-        <p class="page-sub">Your base license covers your shop PC (1 seat). If you turn on multi-user and want more PCs signed in at the same time, buy extra seats here — they run for the same period as your main license.</p>
+        <h1 class="page-h1">Add PCs or renew a multi-PC license</h1>
+        <p class="page-sub">Your base license covers your shop PC (1 seat). Want more PCs signed in at the same time? Add extra seats here — they run for the same period as your main license. Already have several PCs and your license is due? Renew all of them in one payment and get one new key.</p>
       </div>
     </div>
   </section>
@@ -53,6 +53,11 @@
       <div style="line-height:1.75;">
 
         <div style="background:var(--card-dark);border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:28px;">
+          <div role="radiogroup" aria-label="What do you want to do?" style="display:flex;gap:8px;margin-bottom:22px;">
+            <button type="button" id="mode-add" role="radio" aria-checked="true" style="flex:1;padding:10px 8px;border-radius:8px;border:1px solid #0EA5E9;background:#0EA5E9;color:#fff;font-weight:600;cursor:pointer;">Add PCs</button>
+            <button type="button" id="mode-renew" role="radio" aria-checked="false" style="flex:1;padding:10px 8px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:#1E293B;color:#fff;font-weight:600;cursor:pointer;">Renew multi-PC license</button>
+          </div>
+          <p id="mode-help" style="color:var(--text-faint2);font-size:0.8rem;margin:-6px 0 18px;">Pay only for the extra PCs. They run until your current license expires.</p>
           <label for="seat-count" style="display:block;color:var(--text-faint);font-size:0.85rem;margin-bottom:8px;">Total PCs signed in at once (including your shop PC)</label>
           <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;">
             <button type="button" id="seat-minus" aria-label="Fewer seats" style="width:40px;height:40px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:#1E293B;color:#fff;font-size:1.2rem;cursor:pointer;">−</button>
@@ -62,17 +67,17 @@
           </div>
 
           <div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:16px;margin-bottom:20px;">
-            <p style="color:var(--text-faint);font-size:0.85rem;margin:0 0 4px;">Extra-seats price (India)</p>
+            <p id="price-label-in" style="color:var(--text-faint);font-size:0.85rem;margin:0 0 4px;">Extra-seats price (India)</p>
             <p style="color:#fff;font-size:1.6rem;font-weight:700;margin:0 0 10px;" id="price-in">₹2,999<span style="font-size:0.9rem;color:var(--text-faint);">/year</span></p>
-            <p style="color:var(--text-faint);font-size:0.85rem;margin:0 0 4px;">Extra-seats price (International)</p>
+            <p id="price-label-intl" style="color:var(--text-faint);font-size:0.85rem;margin:0 0 4px;">Extra-seats price (International)</p>
             <p style="color:#fff;font-size:1.6rem;font-weight:700;margin:0;" id="price-intl">$59<span style="font-size:0.9rem;color:var(--text-faint);">/year</span></p>
           </div>
-          <p style="color:var(--text-faint2);font-size:0.75rem;margin:0 0 20px;">This is the exact amount you'll be charged for the extra seats only — your existing base license isn't charged again. You'll land straight on a real Razorpay or Lemon Squeezy payment page for it. Extra seats run for the remainder of your current license period, so your first payment may be prorated; we'll always show the real amount on the payment page itself before you pay.</p>
+          <p id="price-note" style="color:var(--text-faint2);font-size:0.75rem;margin:0 0 20px;">This is the exact amount you'll be charged for the extra seats only — your existing base license isn't charged again. You'll land straight on a real Razorpay or Lemon Squeezy payment page for it. Extra seats run for the remainder of your current license period, so your first payment may be prorated; we'll always show the real amount on the payment page itself before you pay.</p>
 
           <label for="seat-email" style="display:block;color:var(--text-faint);font-size:0.85rem;margin-bottom:8px;">Your email (the one your Sarang license is under)</label>
           <input id="seat-email" type="email" required placeholder="you@business.com" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:#1E293B;color:#fff;margin-bottom:20px;">
 
-          <label for="seat-expiry" style="display:block;color:var(--text-faint);font-size:0.85rem;margin-bottom:8px;">When does your current Sarang license expire? (Settings → License in the app)</label>
+          <label id="seat-expiry-label" for="seat-expiry" style="display:block;color:var(--text-faint);font-size:0.85rem;margin-bottom:8px;">When does your current Sarang license expire? (Settings → License in the app)</label>
           <input id="seat-expiry" type="date" required style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:#1E293B;color:#fff;margin-bottom:20px;">
 
           <label for="seat-region" style="display:block;color:var(--text-faint);font-size:0.85rem;margin-bottom:8px;">Paying from</label>
@@ -110,6 +115,12 @@
     // Matches computeSarangSeatTotal() in server.js exactly (fixed 2026-10-01 to drop the
     // base-license component from this flow — see server.js for the full context).
     const PER_SEAT_IN = 2999, PER_SEAT_INTL = 59;
+    // Renewal re-buys the whole license, so it includes the base price. Must match
+    // SARANG_BASE_PRICE_* in server.js and the base price on sarang.html.
+    const BASE_IN = 6999, BASE_INTL = 149;
+    let mode = 'add'; // 'add' | 'renew'
+    // The in-app Renew link can open this page straight in renew mode with #renew.
+    if (location.hash === '#renew') mode = 'renew';
     const seatInput = document.getElementById('seat-count');
     const extraCount = document.getElementById('extra-count');
     const priceIn = document.getElementById('price-in');
@@ -119,9 +130,34 @@
       const total = parseInt(seatInput.value, 10);
       const extra = total - 1;
       extraCount.textContent = extra;
-      priceIn.innerHTML = `₹${(extra * PER_SEAT_IN).toLocaleString('en-IN')}<span style="font-size:0.9rem;color:var(--text-faint);">/year</span>`;
-      priceIntl.innerHTML = `$${extra * PER_SEAT_INTL}<span style="font-size:0.9rem;color:var(--text-faint);">/year</span>`;
+      const baseIn = mode === 'renew' ? BASE_IN : 0, baseIntl = mode === 'renew' ? BASE_INTL : 0;
+      priceIn.innerHTML = `₹${(baseIn + extra * PER_SEAT_IN).toLocaleString('en-IN')}<span style="font-size:0.9rem;color:var(--text-faint);">/year</span>`;
+      priceIntl.innerHTML = `$${baseIntl + extra * PER_SEAT_INTL}<span style="font-size:0.9rem;color:var(--text-faint);">/year</span>`;
     }
+    function setMode(m) {
+      mode = m;
+      const renew = m === 'renew';
+      const addBtn = document.getElementById('mode-add'), renewBtn = document.getElementById('mode-renew');
+      for (const [btn, on] of [[addBtn, !renew], [renewBtn, renew]]) {
+        btn.setAttribute('aria-checked', String(on));
+        btn.style.background = on ? '#0EA5E9' : '#1E293B';
+        btn.style.borderColor = on ? '#0EA5E9' : 'rgba(255,255,255,0.2)';
+      }
+      document.getElementById('mode-help').textContent = renew
+        ? 'Renew your whole license (your shop PC plus the extra PCs) for another year with one payment and one new key.'
+        : 'Pay only for the extra PCs. They run until your current license expires.';
+      document.getElementById('price-label-in').textContent = renew ? 'Yearly renewal price (India)' : 'Extra-seats price (India)';
+      document.getElementById('price-label-intl').textContent = renew ? 'Yearly renewal price (International)' : 'Extra-seats price (International)';
+      document.getElementById('price-note').textContent = renew
+        ? "This is the exact amount you will be charged: the base license plus your extra PCs, for one year starting from your payment date. You will get one new key that covers every PC; enter it on your main PC under Settings → License. Renew close to your expiry date, because the new year starts on the day you pay."
+        : "This is the exact amount you will be charged for the extra seats only; your existing base license is not charged again. Extra seats run for the remainder of your current license period, so your first payment may be prorated. The real amount is always shown on the payment page before you pay.";
+      document.getElementById('seat-expiry').style.display = renew ? 'none' : '';
+      document.getElementById('seat-expiry-label').style.display = renew ? 'none' : 'block';
+      document.getElementById('seat-expiry').required = !renew;
+      render();
+    }
+    document.getElementById('mode-add').addEventListener('click', () => setMode('add'));
+    document.getElementById('mode-renew').addEventListener('click', () => setMode('renew'));
     document.getElementById('seat-minus').addEventListener('click', () => {
       seatInput.value = Math.max(2, parseInt(seatInput.value, 10) - 1);
       render();
@@ -130,7 +166,7 @@
       seatInput.value = Math.min(20, parseInt(seatInput.value, 10) + 1);
       render();
     });
-    render();
+    setMode(mode);
 
     document.getElementById('seat-request-btn').addEventListener('click', async () => {
       const btn = document.getElementById('seat-request-btn');
@@ -146,7 +182,7 @@
         msg.style.display = 'block';
         return;
       }
-      if (!currentExpiryDate) {
+      if (mode === 'add' && !currentExpiryDate) {
         msg.textContent = 'Please enter your current license expiry date (Settings → License in the app).';
         msg.style.color = 'var(--danger)';
         msg.style.display = 'block';
@@ -158,7 +194,7 @@
         const res = await fetch('/api/sarang-seat-checkout', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, seats, region, currentExpiryDate })
+          body: JSON.stringify({ email, seats, region, currentExpiryDate: mode === 'add' ? currentExpiryDate : '', mode })
         });
         const data = await res.json();
         if (data.paymentUrl) {
