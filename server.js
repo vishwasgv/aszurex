@@ -1366,6 +1366,35 @@ app.post('/api/webhooks/lemonsqueezy', async (req, res) => {
         return res.status(200).json({ success: true });
       }
 
+      // Price-loophole guard: the seat variant is pay-what-you-want (min $0) on Lemon Squeezy, so the
+      // customer can retype the amount on the hosted checkout page. We never trust the amount the
+      // checkout was CREATED with; we verify what was actually PAID (net of tax) before issuing seats.
+      const orderVariantId = String(lsAttrs?.first_order_item?.variant_id ?? '');
+      const seatCountOnOrder = Number(custom.seats) || 0;
+      const isSeatOrder = (LEMONSQUEEZY_VARIANT_ID && orderVariantId === String(LEMONSQUEEZY_VARIANT_ID)) || seatCountOnOrder > 1;
+      if (isSeatOrder) {
+        const expectedUsd = computeSarangSeatTotal(seatCountOnOrder, 'INTL');
+        const totalUsd = Number(lsAttrs?.total_usd ?? (lsAttrs?.currency === 'USD' ? lsAttrs?.total : NaN)) / 100;
+        const taxUsd = Number(lsAttrs?.tax_usd ?? (lsAttrs?.currency === 'USD' ? lsAttrs?.tax : 0)) / 100 || 0;
+        const paidNetUsd = totalUsd - taxUsd;
+        const underpaid = expectedUsd <= 0 || !Number.isFinite(paidNetUsd) || paidNetUsd < expectedUsd - 0.5;
+        if (underpaid) {
+          console.error(`❌ Lemon Squeezy seat order ${fallbackRef} rejected: paid net $${paidNetUsd} < expected $${expectedUsd} for ${seatCountOnOrder} PCs — NO key issued.`);
+          try {
+            await createTransporter().sendMail({
+              from: `"AszureX" <${ZOHO_EMAIL}>`,
+              to: TO_EMAIL,
+              replyTo: email,
+              subject: `ACTION NEEDED: seat order underpaid — ${email}`,
+              html: `<div style="font-family:Arial,sans-serif;max-width:600px;"><h3>Seat order paid less than the price — no key was issued</h3><p><b>Customer:</b> ${escapeHtml(email)}</p><p><b>PCs requested (total):</b> ${seatCountOnOrder}</p><p><b>Expected (net of tax):</b> $${expectedUsd}</p><p><b>Actually paid (net of tax):</b> ${Number.isFinite(paidNetUsd) ? '$' + paidNetUsd : 'unreadable'}</p><p><b>Lemon Squeezy order:</b> ${escapeHtml(String(lsAttrs?.order_number || fallbackRef || ''))}</p><p>Refund the order in Lemon Squeezy or ask the customer to pay the difference, then issue the key manually.</p></div>`
+            });
+          } catch (mailErr) {
+            console.error('⚠️  Could not email founder about underpaid seat order:', mailErr.message);
+          }
+          return res.status(200).json({ success: true });
+        }
+      }
+
       try {
         // Co-terming: custom.currentExpiryDate is only present when createLemonSqueezySeatCheckout()
         // attached it (a dynamic seat-checkout carrying a valid self-reported date) — any other
