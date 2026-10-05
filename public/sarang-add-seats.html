@@ -62,15 +62,18 @@
           </div>
 
           <div style="border-top:1px solid rgba(255,255,255,0.1);padding-top:16px;margin-bottom:20px;">
-            <p style="color:var(--text-faint);font-size:0.85rem;margin:0 0 4px;">Estimated price (India)</p>
-            <p style="color:#fff;font-size:1.6rem;font-weight:700;margin:0 0 10px;" id="price-in">₹9,998<span style="font-size:0.9rem;color:var(--text-faint);">/year</span></p>
-            <p style="color:var(--text-faint);font-size:0.85rem;margin:0 0 4px;">Estimated price (International)</p>
-            <p style="color:#fff;font-size:1.6rem;font-weight:700;margin:0;" id="price-intl">$208<span style="font-size:0.9rem;color:var(--text-faint);">/year</span></p>
+            <p style="color:var(--text-faint);font-size:0.85rem;margin:0 0 4px;">Extra-seats price (India)</p>
+            <p style="color:#fff;font-size:1.6rem;font-weight:700;margin:0 0 10px;" id="price-in">₹2,999<span style="font-size:0.9rem;color:var(--text-faint);">/year</span></p>
+            <p style="color:var(--text-faint);font-size:0.85rem;margin:0 0 4px;">Extra-seats price (International)</p>
+            <p style="color:#fff;font-size:1.6rem;font-weight:700;margin:0;" id="price-intl">$59<span style="font-size:0.9rem;color:var(--text-faint);">/year</span></p>
           </div>
-          <p style="color:var(--text-faint2);font-size:0.75rem;margin:0 0 20px;">This is the exact amount you'll be charged — you'll land straight on a real Razorpay or Lemon Squeezy payment page for it. Extra seats run for the remainder of your current license period, so your first payment may be prorated; we'll always show the real amount on the payment page itself before you pay.</p>
+          <p style="color:var(--text-faint2);font-size:0.75rem;margin:0 0 20px;">This is the exact amount you'll be charged for the extra seats only — your existing base license isn't charged again. You'll land straight on a real Razorpay or Lemon Squeezy payment page for it. Extra seats run for the remainder of your current license period, so your first payment may be prorated; we'll always show the real amount on the payment page itself before you pay.</p>
 
           <label for="seat-email" style="display:block;color:var(--text-faint);font-size:0.85rem;margin-bottom:8px;">Your email (the one your Sarang license is under)</label>
           <input id="seat-email" type="email" required placeholder="you@business.com" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:#1E293B;color:#fff;margin-bottom:20px;">
+
+          <label for="seat-expiry" style="display:block;color:var(--text-faint);font-size:0.85rem;margin-bottom:8px;">When does your current Sarang license expire? (Settings → License in the app)</label>
+          <input id="seat-expiry" type="date" required style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:#1E293B;color:#fff;margin-bottom:20px;">
 
           <label for="seat-region" style="display:block;color:var(--text-faint);font-size:0.85rem;margin-bottom:8px;">Paying from</label>
           <select id="seat-region" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:#1E293B;color:#fff;margin-bottom:20px;">
@@ -101,9 +104,11 @@
   <script src="js/main.js"></script>
   <script>
     // Final pricing (confirmed 2026-10-01, benchmarked against comparable offline/desktop
-    // business software — Vyapar/Zoho Books/Tally). PER_SEAT_* is ~40% of the base license,
-    // matching what the live self-serve checkout in server.js actually charges.
-    const BASE_IN = 6999, BASE_INTL = 149;
+    // business software — Vyapar/Zoho Books/Tally). PER_SEAT_* is ~40% of the base license.
+    // This page is exclusively for customers who already have a base license (see the page
+    // copy above) — it must NEVER re-charge BASE_IN/BASE_INTL, only the incremental seats.
+    // Matches computeSarangSeatTotal() in server.js exactly (fixed 2026-10-01 to drop the
+    // base-license component from this flow — see server.js for the full context).
     const PER_SEAT_IN = 2999, PER_SEAT_INTL = 59;
     const seatInput = document.getElementById('seat-count');
     const extraCount = document.getElementById('extra-count');
@@ -114,8 +119,8 @@
       const total = parseInt(seatInput.value, 10);
       const extra = total - 1;
       extraCount.textContent = extra;
-      priceIn.innerHTML = `₹${(BASE_IN + extra * PER_SEAT_IN).toLocaleString('en-IN')}<span style="font-size:0.9rem;color:var(--text-faint);">/year</span>`;
-      priceIntl.innerHTML = `$${BASE_INTL + extra * PER_SEAT_INTL}<span style="font-size:0.9rem;color:var(--text-faint);">/year</span>`;
+      priceIn.innerHTML = `₹${(extra * PER_SEAT_IN).toLocaleString('en-IN')}<span style="font-size:0.9rem;color:var(--text-faint);">/year</span>`;
+      priceIntl.innerHTML = `$${extra * PER_SEAT_INTL}<span style="font-size:0.9rem;color:var(--text-faint);">/year</span>`;
     }
     document.getElementById('seat-minus').addEventListener('click', () => {
       seatInput.value = Math.max(2, parseInt(seatInput.value, 10) - 1);
@@ -133,9 +138,16 @@
       const email = document.getElementById('seat-email').value.trim();
       const region = document.getElementById('seat-region').value;
       const seats = parseInt(seatInput.value, 10);
+      const currentExpiryDate = document.getElementById('seat-expiry').value; // "YYYY-MM-DD" from <input type="date">, or "" if left blank
       msg.style.display = 'none';
       if (!email || !email.includes('@')) {
         msg.textContent = 'Please enter a valid email address.';
+        msg.style.color = 'var(--danger)';
+        msg.style.display = 'block';
+        return;
+      }
+      if (!currentExpiryDate) {
+        msg.textContent = 'Please enter your current license expiry date (Settings → License in the app).';
         msg.style.color = 'var(--danger)';
         msg.style.display = 'block';
         return;
@@ -146,7 +158,7 @@
         const res = await fetch('/api/sarang-seat-checkout', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, seats, region })
+          body: JSON.stringify({ email, seats, region, currentExpiryDate })
         });
         const data = await res.json();
         if (data.paymentUrl) {

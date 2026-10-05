@@ -333,18 +333,43 @@ app.post('/api/apply', upload.single('resume'), async (req, res) => {
 // identical to before step (2) existed.
 
 // Pricing — MUST stay numerically identical to public/sarang-add-seats.html's <script> block
-// (BASE_IN/PER_SEAT_IN/BASE_INTL/PER_SEAT_INTL), which is what actually renders the price the
-// customer sees before clicking through to checkout. Confirmed final pricing (2026-09-30): ₹6,999
-// / $149 base (1 PC), ₹2,999 / $59 per additional seat.
-const SARANG_SEAT_BASE_IN = 6999;
+// (PER_SEAT_IN/PER_SEAT_INTL), which is what actually renders the price the customer sees before
+// clicking through to checkout. Per-seat price confirmed 2026-09-30: ₹2,999 / $59.
+//
+// Real bug fixed 2026-10-01: this page is EXCLUSIVELY for customers who already own a base
+// license and just want more PCs (see the page copy on sarang-add-seats.html — "Your base
+// license covers your shop PC (1 seat)... buy extra seats here"). This function used to add
+// SARANG_SEAT_BASE_IN/SARANG_SEAT_BASE_INTL on top of the per-seat cost, re-charging the full
+// base license price every time, on top of the extra seats, even though the customer already
+// paid for the base. Standard seat-billing practice (Zoho Books et al.) never re-charges the
+// base fee for incremental seats — only the seats themselves. The BASE_* constants are removed
+// entirely from this formula; it now returns ONLY the incremental seat cost.
 const SARANG_SEAT_PER_SEAT_IN = 2999;
-const SARANG_SEAT_BASE_INTL = 149;
 const SARANG_SEAT_PER_SEAT_INTL = 59;
 function computeSarangSeatTotal(seatCount, region) {
   const extra = seatCount - 1;
   return region === 'IN'
-    ? SARANG_SEAT_BASE_IN + extra * SARANG_SEAT_PER_SEAT_IN
-    : SARANG_SEAT_BASE_INTL + extra * SARANG_SEAT_PER_SEAT_INTL;
+    ? extra * SARANG_SEAT_PER_SEAT_IN
+    : extra * SARANG_SEAT_PER_SEAT_INTL;
+}
+
+// ── Seat co-terming (2026-10-01) ──────────────────────────────
+// Extra seats bought via sarang-add-seats.html must run for the REMAINDER of the customer's
+// existing license period, not reset to a fresh 365-day cycle (that silently discards whatever
+// time was left — see issueRenewalKey() below for the actual co-terming math). server.js is
+// stateless (no DB), so it can't look up the customer's real current expiry itself; instead the
+// customer self-reports it (visible to them in-app under Settings → License) on the add-seats
+// form, as an ISO "YYYY-MM-DD" string from an <input type="date">. This validates that
+// self-reported value: returns a Date at UTC midnight of that day if it's a real, parseable date
+// strictly in the future, or null otherwise (missing field, garbage string, or a past/today
+// date — co-terming to a non-future date would issue an already-expired key). Callers MUST treat
+// null as "co-terming unavailable" and fall through to the existing default behavior, never as a
+// reason to fail the request — a malformed date must never block a purchase.
+function parseValidFutureDate(value) {
+  if (!value || typeof value !== 'string') return null;
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.getTime() > Date.now() ? d : null;
 }
 
 // ── Dynamic self-serve seat checkout (2026-09-30) — NOT YET CONFIGURED IN PRODUCTION ──
@@ -386,11 +411,13 @@ const LEMONSQUEEZY_VARIANT_ID = process.env.LEMONSQUEEZY_VARIANT_ID || '';
 // captureSarangReferral()), so there is no known partner code to attach at checkout time for this
 // route. notes.ref is intentionally left unset here — partner attribution for extra-seat sales
 // stays a manual, founder-created Payment Link for now, matching current scope.
-async function createRazorpaySeatPaymentLink(seatCount, email) {
+async function createRazorpaySeatPaymentLink(seatCount, email, currentExpiryDate = null) {
   if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) return null;
   try {
     const amountRupees = computeSarangSeatTotal(seatCount, 'IN');
     const auth = Buffer.from(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`).toString('base64');
+    const notes = { seats: String(seatCount) }; // read back by /api/webhooks/razorpay's issueRenewalKey() call
+    if (currentExpiryDate) notes.currentExpiryDate = currentExpiryDate.toISOString().slice(0, 10); // co-terming — see issueRenewalKey()
     const resp = await fetch('https://api.razorpay.com/v1/payment_links', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Basic ${auth}` },
@@ -401,7 +428,7 @@ async function createRazorpaySeatPaymentLink(seatCount, email) {
         customer: { email },
         notify: { email: true, sms: false },
         reminder_enable: true,
-        notes: { seats: String(seatCount) } // read back by /api/webhooks/razorpay's issueRenewalKey() call
+        notes // read back by /api/webhooks/razorpay's issueRenewalKey() call
       }),
       signal: AbortSignal.timeout(10000)
     });
@@ -423,10 +450,12 @@ async function createRazorpaySeatPaymentLink(seatCount, email) {
 // configured for "Pay what you want" pricing on the Lemon Squeezy side). Returns the checkout
 // URL, or null on any missing config/failure so the caller falls through to the email fallback,
 // same contract as the Razorpay function above.
-async function createLemonSqueezySeatCheckout(seatCount, email) {
+async function createLemonSqueezySeatCheckout(seatCount, email, currentExpiryDate = null) {
   if (!LEMONSQUEEZY_API_KEY || !LEMONSQUEEZY_STORE_ID || !LEMONSQUEEZY_VARIANT_ID) return null;
   try {
     const amountDollars = computeSarangSeatTotal(seatCount, 'INTL');
+    const custom = { seats: String(seatCount) }; // read back by /api/webhooks/lemonsqueezy's issueRenewalKey() call
+    if (currentExpiryDate) custom.currentExpiryDate = currentExpiryDate.toISOString().slice(0, 10); // co-terming — see issueRenewalKey()
     const resp = await fetch('https://api.lemonsqueezy.com/v1/checkouts', {
       method: 'POST',
       headers: {
@@ -445,7 +474,7 @@ async function createLemonSqueezySeatCheckout(seatCount, email) {
             },
             checkout_data: {
               email,
-              custom: { seats: String(seatCount) } // read back by /api/webhooks/lemonsqueezy's issueRenewalKey() call
+              custom // read back by /api/webhooks/lemonsqueezy's issueRenewalKey() call
             }
           },
           relationships: {
@@ -484,7 +513,7 @@ app.post('/api/sarang-seat-checkout', async (req, res) => {
       return res.status(429).json({ success: false, message: 'Too many requests. Please try again later.' });
     }
 
-    const { email, seats, region } = req.body;
+    const { email, seats, region, currentExpiryDate } = req.body;
     const seatCount = Number(seats);
     if (!email || !SARANG_EMAIL_RE.test(email)) {
       return res.status(400).json({ success: false, message: 'Please enter a valid email address.' });
@@ -493,6 +522,14 @@ app.post('/api/sarang-seat-checkout', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Please choose between 2 and 20 total PCs.' });
     }
     const seatRegion = region === 'INTL' ? 'INTL' : 'IN';
+
+    // Co-terming (2026-10-01): missing/unparseable/past-dated input never blocks the purchase —
+    // it just falls back to null, meaning "co-terming unavailable", and issueRenewalKey() falls
+    // back to its existing default (a fresh full cycle from today). See parseValidFutureDate().
+    const validExpiryDate = parseValidFutureDate(currentExpiryDate);
+    if (currentExpiryDate && !validExpiryDate) {
+      console.log(`ℹ️  Seat-checkout: currentExpiryDate "${currentExpiryDate}" missing/unparseable/not in the future — proceeding without co-terming (${email}).`);
+    }
 
     // A ready-made Payment Link for this exact tier — send the customer straight there.
     const paymentUrl = SARANG_SEAT_PAYMENT_LINKS?.[String(seatCount)]?.[seatRegion];
@@ -506,8 +543,8 @@ app.post('/api/sarang-seat-checkout', async (req, res) => {
     // also falls through to the email path below on any live failure — see the two functions'
     // own comments above for the full contract.
     const dynamicPaymentUrl = seatRegion === 'IN'
-      ? await createRazorpaySeatPaymentLink(seatCount, email)
-      : await createLemonSqueezySeatCheckout(seatCount, email);
+      ? await createRazorpaySeatPaymentLink(seatCount, email, validExpiryDate)
+      : await createLemonSqueezySeatCheckout(seatCount, email, validExpiryDate);
     if (dynamicPaymentUrl) {
       console.log(`✅ Seat-checkout: dynamic Payment Link created — ${email}, ${seatCount} seats, ${seatRegion}`);
       return res.json({ success: true, paymentUrl: dynamicPaymentUrl });
@@ -1076,26 +1113,49 @@ function receiptHtml({ issuedAt, email, description, receipt, provider = null, f
   `;
 }
 
-async function issueRenewalKey({ email, region, seats = 1, receipt = null, provider = null, fallbackRef = null }) {
-  const issuedAt = new Date();
+// Mirrors sarang-business-os/src/main/services/license.service.ts's LICENSE_PAID_EXPIRES_AFTER_DAYS
+// exactly — must stay numerically identical or the co-terming math below lands on the wrong date.
+const SARANG_LICENSE_PAID_EXPIRES_AFTER_DAYS = 365;
+const SARANG_DAY_MS = 86_400_000;
+
+async function issueRenewalKey({ email, region, seats = 1, receipt = null, provider = null, fallbackRef = null, currentExpiryDate = null }) {
+  // Co-terming (2026-10-01): when a valid future currentExpiryDate is supplied (self-reported by
+  // the customer on the add-seats form — see parseValidFutureDate()), back-date issuedAt so this
+  // key's own expiry (issuedAt + SARANG_LICENSE_PAID_EXPIRES_AFTER_DAYS days, computed the normal
+  // way by the app) lands exactly on that same date — i.e. the new seats run out exactly when the
+  // rest of the license does, instead of silently granting a fresh full 365-day cycle and
+  // discarding whatever time was left. Default (no/invalid currentExpiryDate) is UNCHANGED from
+  // before this fix: issuedAt = now, a fresh full cycle — this is the fallback path for every
+  // caller that doesn't pass the new param (static-link purchases, the email-fallback flow, and
+  // any future non-seat caller of this function).
+  const validExpiry = currentExpiryDate instanceof Date && !Number.isNaN(currentExpiryDate.getTime()) && currentExpiryDate.getTime() > Date.now()
+    ? currentExpiryDate
+    : null;
+  const isCoTermed = validExpiry !== null;
+  const paymentDate = new Date(); // the real transaction date — always "now", regardless of co-terming; used for the receipt only
+  const issuedAt = isCoTermed
+    ? new Date(validExpiry.getTime() - SARANG_LICENSE_PAID_EXPIRES_AFTER_DAYS * SARANG_DAY_MS)
+    : paymentDate;
   // One seat (the shop PC) keeps the plain SARANG2 key; more seats need the SARANG3 key that carries the count.
   const licenseKey = seats > 1 ? generateSarangLicenseKeyV3('PAID', region, issuedAt, seats) : generateSarangLicenseKeyV2('PAID', region, issuedAt);
-  const description = `Sarang Business OS Lite — Annual License${seats > 1 ? ` (${seats} PCs)` : ''}`;
+  const description = isCoTermed
+    ? `Sarang Business OS Lite — Extra seats added to existing license${seats > 1 ? ` (now ${seats} PCs total)` : ''}, now expiring ${validExpiry.toISOString().slice(0, 10)}`
+    : `Sarang Business OS Lite — Annual License${seats > 1 ? ` (${seats} PCs)` : ''}`;
   await createTransporter().sendMail({
     from: `"AszureX" <${ZOHO_EMAIL}>`,
     to: email,
     bcc: TO_EMAIL,
-    subject: 'Your renewed Sarang license',
+    subject: isCoTermed ? 'Your extra Sarang seats are ready' : 'Your renewed Sarang license',
     html: `
       <div style="font-family:Arial,sans-serif;max-width:600px;">
-        <h2 style="color:#0EA5E9;">Thank you for renewing Sarang</h2>${seats > 1 ? `<p>This key covers ${seats} PCs signed in at the same time.</p>` : ''}
+        <h2 style="color:#0EA5E9;">${isCoTermed ? 'Your extra Sarang seats are ready' : 'Thank you for renewing Sarang'}</h2>${seats > 1 ? `<p>This key covers ${seats} PCs signed in at the same time.</p>` : ''}${isCoTermed ? `<p>This new key runs on the same schedule as your existing license — it expires ${validExpiry.toISOString().slice(0, 10)}, not a fresh year from today.</p>` : ''}
         <p>Your new license key is below — enter it in Sarang under Settings → License to keep everything working exactly as before.</p>
         <p style="font-family:monospace;font-size:16px;background:#f7f9fc;border-left:4px solid #0EA5E9;padding:12px 16px;border-radius:4px;">${licenseKey}</p>
       </div>
-      ${receiptHtml({ issuedAt, email, description, receipt, provider, fallbackRef })}
+      ${receiptHtml({ issuedAt: paymentDate, email, description, receipt, provider, fallbackRef })}
     `
   });
-  console.log(`✅ Renewal key issued and emailed — ${email} (${region}, ${seats} seat${seats === 1 ? '' : 's'}${receipt && receipt.amount ? ', receipt included' : ', minimal fallback receipt (no amount data on this event — customer still got a referenced receipt block)'})`);
+  console.log(`✅ Renewal key issued and emailed — ${email} (${region}, ${seats} seat${seats === 1 ? '' : 's'}${isCoTermed ? `, co-termed to expire ${validExpiry.toISOString().slice(0, 10)}` : ', fresh cycle from today'}${receipt && receipt.amount ? ', receipt included' : ', minimal fallback receipt (no amount data on this event — customer still got a referenced receipt block)'})`);
   return licenseKey;
 }
 
@@ -1228,7 +1288,11 @@ app.post('/api/webhooks/razorpay', async (req, res) => {
       }
 
       try {
-        await issueRenewalKey({ email, region: 'IN', seats: Number(notes.seats) || 1, receipt, provider: 'Razorpay', fallbackRef });
+        // Co-terming: notes.currentExpiryDate is only present when createRazorpaySeatPaymentLink()
+        // attached it (a dynamic seat-checkout link that carried a valid self-reported date) — a
+        // founder-made static Payment Link never has it, so this is undefined/null there and
+        // issueRenewalKey() falls back to its default (fresh cycle), unchanged from before.
+        await issueRenewalKey({ email, region: 'IN', seats: Number(notes.seats) || 1, receipt, provider: 'Razorpay', fallbackRef, currentExpiryDate: parseValidFutureDate(notes.currentExpiryDate) });
         if (paymentEntity?.amount) {
           recordPartnerCommission({ ref: notes.ref, email, amountValue: paymentEntity.amount / 100, currency: '₹', region: 'IN', paymentRef: paymentEntity.id });
         }
@@ -1303,7 +1367,11 @@ app.post('/api/webhooks/lemonsqueezy', async (req, res) => {
       }
 
       try {
-        await issueRenewalKey({ email, region: 'INTL', seats: Number(custom.seats) || 1, receipt, provider: 'Lemon Squeezy', fallbackRef });
+        // Co-terming: custom.currentExpiryDate is only present when createLemonSqueezySeatCheckout()
+        // attached it (a dynamic seat-checkout carrying a valid self-reported date) — any other
+        // checkout never has it, so this is undefined/null there and issueRenewalKey() falls back
+        // to its default (fresh cycle), unchanged from before.
+        await issueRenewalKey({ email, region: 'INTL', seats: Number(custom.seats) || 1, receipt, provider: 'Lemon Squeezy', fallbackRef, currentExpiryDate: parseValidFutureDate(custom.currentExpiryDate) });
         // custom.ref (checkout[custom][ref] on the partner's checkout URL) mirrors Razorpay's notes.ref.
         const totalAmount = Number(lsAttrs?.total) / 100; // LS gives cents; total_formatted is display-only text
         if (Number.isFinite(totalAmount) && totalAmount > 0) {
