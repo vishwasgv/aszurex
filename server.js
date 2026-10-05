@@ -369,7 +369,11 @@ function parseValidFutureDate(value) {
   if (!value || typeof value !== 'string') return null;
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return null;
-  return d.getTime() > Date.now() ? d : null;
+  // Upper bound: a real license never has more than one paid cycle (365 days) left, so a
+  // later self-reported date is either a typo or an attempt to back-date the new key into a
+  // multi-year license. 366 days leaves a day of slack for timezone differences.
+  const maxMs = Date.now() + 366 * 86_400_000;
+  return d.getTime() > Date.now() && d.getTime() <= maxMs ? d : null;
 }
 
 // ── Dynamic self-serve seat checkout (2026-09-30) — NOT YET CONFIGURED IN PRODUCTION ──
