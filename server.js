@@ -1337,6 +1337,13 @@ app.post('/api/webhooks/lemonsqueezy', async (req, res) => {
     const event = req.body;
     const eventName = event.meta?.event_name;
     if (eventName === 'order_created' || eventName === 'subscription_payment_success') {
+      // A subscription's first payment fires BOTH order_created and subscription_payment_success
+      // (different resource ids, so the dedup below can't match them). order_created already
+      // handles the purchase; only genuine renewals should come through the invoice event.
+      if (eventName === 'subscription_payment_success' && event.data?.attributes?.billing_reason === 'initial') {
+        console.log(`ℹ️  Lemon Squeezy webhook: initial subscription invoice ${event.data?.id} skipped — order_created issues the key for the first payment.`);
+        return res.status(200).json({ success: true });
+      }
       const email = event.data?.attributes?.user_email || event.data?.attributes?.customer_email;
       if (!email) {
         console.error('❌ Lemon Squeezy webhook with no email on the payload — cannot issue a key.', JSON.stringify(event).slice(0, 500));
