@@ -88,8 +88,12 @@ built and given away by AszureX as a standalone tool any business can use.
   connection, answering questions about the business's own sales,
   inventory, and payments in plain language from a fixed set of verified
   queries — it does not invent figures and sends no data anywhere.
+- **Warranty tracking**: A default warranty can be set on any product and is
+  stamped on each sale and printed on the bill; a Warranty screen finds what is
+  still covered by phone, customer, bill, product or serial number, shows what
+  ends within 30 days, sends a WhatsApp reminder and keeps a claim log.
 - **Refunds**: License payments are non-refundable.
-- **Version**: 1.8.1 (current as of October 2026).
+- **Version**: 1.9.0 (current as of October 2026).
 - **Download**: https://aszurex.com/sarang.html#download (single installer,
   no sign-up beyond download details, full functionality from day one).
 
