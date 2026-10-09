@@ -92,6 +92,19 @@ built and given away by AszureX as a standalone tool any business can use.
   stamped on each sale and printed on the bill; a Warranty screen finds what is
   still covered by phone, customer, bill, product or serial number, shows what
   ends within 30 days, sends a WhatsApp reminder and keeps a claim log.
+- **Audit trail**: Every login, sale, cancellation, payment, stock change and
+  setting change is recorded with who did it and when; a Verify Integrity check
+  confirms the history has not been altered.
+- **Bank and cash**: Every payment and expense updates the right bank or cash
+  balance, and a bank statement (PDF, Excel or CSV) can be uploaded and matched
+  against the books on the user's own computer.
+- **Expiry, batch and serial tracking**: Batches with expiry alerts and
+  oldest-first selling for pharmacies and dated goods, and serial/IMEI tracking
+  with warranty per unit for electronics shops.
+- **Offers and loyalty**: Buy-X-get-Y-free and quantity-discount offers applied
+  at checkout, loyalty punch cards, and special price lists per customer.
+- **Billing documents**: Credit notes, returns and exchanges, quotations that
+  can be previewed and edited, and saved bills that can be edited or revised.
 - **Refunds**: License payments are non-refundable.
 - **Version**: 1.9.0 (current as of October 2026).
 - **Download**: https://aszurex.com/sarang.html#download (single installer,
