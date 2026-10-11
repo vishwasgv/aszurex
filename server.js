@@ -866,11 +866,21 @@ app.post('/api/sarang-download', async (req, res) => {
     // Honeypot: a hidden field real users never fill; bots that fill every
     // field on the form will trip this. Silently "succeed" so a bot doesn't
     // learn its submission was rejected — but never send a real key/email.
-    if (req.body.website) {
+    // 2026-10-11 — the field used to be named "website", which browser autofill
+    // fills on real visitors (it ignores autocomplete="off"), so autofilled
+    // submissions were treated as bots and got no key. Renamed to a name no
+    // autofill matches; the old name is deliberately ignored (a cached copy of
+    // the old page may still post it).
+    if (req.body.hp_q7x) {
       return res.json({ success: true, downloadUrl: SARANG_DOWNLOAD_URL });
     }
 
-    const { name, email, phone, country, businessName, businessType, state, city, marketingOptIn, refCode } = req.body;
+    // Pasted or autofilled values often carry stray spaces; trim the text fields.
+    const clean = (v) => (typeof v === 'string' ? v.trim() : v);
+    const name = clean(req.body.name), email = clean(req.body.email), phone = clean(req.body.phone);
+    const country = clean(req.body.country), businessName = clean(req.body.businessName), businessType = clean(req.body.businessType);
+    const state = clean(req.body.state), city = clean(req.body.city);
+    const { marketingOptIn, refCode } = req.body;
     const optedInToMarketing = marketingOptIn === 'yes' || marketingOptIn === true;
     // Partner-referral tag (U7) — free text from the ?ref= link, logged as-is for the founder
     // to cross-reference against partner codes; never validated against a partner list here
