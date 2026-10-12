@@ -57,12 +57,6 @@
     <priority>0.5</priority>
   </url>
 
-  <url>
-    <loc>https://aszurex.com/sarang-partner-signup.html</loc>
-    <lastmod>2026-09-29</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
 
   <url>
     <loc>https://aszurex.com/privacy.html</loc>
@@ -99,10 +93,4 @@
     <priority>0.3</priority>
   </url>
 
-  <url>
-    <loc>https://aszurex.com/sarang-partners.html</loc>
-    <lastmod>2026-09-29</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
 </urlset>
