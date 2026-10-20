@@ -39,7 +39,7 @@ Email and sheet features need the environment variables below; without them the 
 ## Things that must stay in step with the app
 
 - `public/sarang.html` has hardcoded version text and prices; bump it on every Sarang release and update `lastmod` in `public/sitemap.xml`.
-- `public/llms.txt` and `public/robots.txt` are the AI-discoverability files; keep them consistent with what is actually live (the partner terms are still listed in `llms.txt` while the program is parked).
+- `public/llms.txt` and `public/robots.txt` are the AI-discoverability files; keep them consistent with what is actually live (the partner terms are listed in `llms.txt` and the program is public).
 - The Ed25519 public key compiled into the app must match the private key on Render; rotating one without the other makes every new key fail activation.
 
 ## Contact
