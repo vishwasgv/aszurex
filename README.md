@@ -31,9 +31,9 @@ Email and sheet features need the environment variables below; without them the 
 - Licence signing: `SARANG_LICENSE_HMAC_SECRET` (legacy `SARANG-` keys), the Ed25519 private key variables read by `server.js` (search for `SARANG_LICENSE_ED`)
 - Razorpay: `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`
 - Lemon Squeezy: `LEMONSQUEEZY_API_KEY`, `LEMONSQUEEZY_STORE_ID`, `LEMONSQUEEZY_VARIANT_ID`, `LEMON_SQUEEZY_WEBHOOK_SECRET` (note the different spelling)
-- Seats: `SARANG_SEAT_PAYMENT_LINKS_JSON`, `SARANG_SEAT_REQUEST_SHEET_WEBHOOK_URL`
+- Seats: `SARANG_SEAT_REQUEST_SHEET_WEBHOOK_URL` (logs seat requests); `SARANG_SEAT_PAYMENT_LINKS_JSON` is optional static per-tier links and is intentionally unset because dynamic checkout covers it
 - Safety valves: `SARANG_ENFORCEMENT_SUSPENDED`, `SARANG_REVOKED_KEY_HASHES`
-- Google Apps Script sheet webhooks: `SARANG_LEAD_SHEET_WEBHOOK_URL`, `SARANG_USAGE_SHEET_WEBHOOK_URL`, `SARANG_DEVICE_SHEET_WEBHOOK_URL`, `SARANG_SUGGESTION_SHEET_WEBHOOK_URL`, `SARANG_COMMISSION_SHEET_WEBHOOK_URL`, `SARANG_PARTNER_SIGNUP_SHEET_WEBHOOK_URL`
+- Google Apps Script sheet webhooks (the partner, commission and seat-request ones share one web app; source in sarang-business-os/docs/apps-script/): `SARANG_LEAD_SHEET_WEBHOOK_URL`, `SARANG_USAGE_SHEET_WEBHOOK_URL`, `SARANG_DEVICE_SHEET_WEBHOOK_URL`, `SARANG_SUGGESTION_SHEET_WEBHOOK_URL`, `SARANG_COMMISSION_SHEET_WEBHOOK_URL`, `SARANG_PARTNER_SIGNUP_SHEET_WEBHOOK_URL`
 - `PORT`
 
 ## Things that must stay in step with the app
