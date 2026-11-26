@@ -106,7 +106,7 @@ built and given away by AszureX as a standalone tool any business can use.
 - **Billing documents**: Credit notes, returns and exchanges, quotations that
   can be previewed and edited, and saved bills that can be edited or revised.
 - **Refunds**: License payments are non-refundable.
-- **Version**: 2.0.0 (current as of November 2026).
+- **Version**: 2.1.0 (current as of November 2026).
 - **Download**: https://aszurex.com/sarang.html#download (single installer,
   no sign-up beyond download details, full functionality from day one).
 
